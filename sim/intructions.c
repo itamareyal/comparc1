@@ -17,6 +17,9 @@ typedef struct _command {
 	unsigned int rs;
 	unsigned int rt;
 	unsigned int immiediate;
+	unsigned int pipeline;
+	unsigned int stall_flag;
+	unsigned int core_id;
 }Command;
 
 
@@ -30,7 +33,16 @@ typedef struct _command {
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
 
-
+// put stall when the comaand is not valid
+Command put_stall(Command cmd)
+{
+	cmd.opcode = 0;
+	cmd.rd = 0;
+	cmd.rs = 0;
+	cmd.rt = 0;
+	cmd.immiediate = 1;
+	return cmd;
+}
 
 // this function creates a struct Command from a string in memory
 Command line_to_command(unsigned int inst)
@@ -42,17 +54,17 @@ Command line_to_command(unsigned int inst)
 	cmd.rt = get_byte(inst, 3);
 	cmd.immiediate = (get_byte(inst, 2) * 16 * 16) + (get_byte(inst, 1) * 16) + get_byte(inst, 0);
 	//handle all out of bounds future problems
-	if (cmd.opcode < 7 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
+	if (cmd.opcode < 9 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
 	{
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15 || cmd.rd == 1)
 			cmd = put_stall(cmd);
 	}
-	if (cmd.opcode > 6 && cmd.opcode < 13)//if opcode branch we need to check few expations
+	if (cmd.opcode > 8 && cmd.opcode < 15)//if opcode branch we need to check few expations
 	{
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
 			cmd = put_stall(cmd);
 	}
-	if (cmd.opcode == 13)// check only cmd.rd
+	if (cmd.opcode == 15)// jal; check only cmd.rd
 	{
 		if (cmd.rd > 15)
 			cmd = put_stall(cmd);
@@ -62,10 +74,160 @@ Command line_to_command(unsigned int inst)
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
 			cmd = put_stall(cmd);
 	}
-	if (cmd.opcode > 19) //how to handle error opcode that not exist
+	if (cmd.opcode > 20) //how to handle error opcode that not exist
 		cmd = put_stall(cmd);
 
 	return cmd;
+}
+
+
+int execution(int regs[], int pc, Command cmd, unsigned int* mem) {
+	switch (cmd.opcode)
+	{
+	case 0: //add opcode
+	{
+		if (cmd.rd == 0 && cmd.rs == 0 && cmd.rt == 0 && cmd.immiediate == 0)
+			break; // it's a stall
+		else {
+			add(regs, cmd);
+			regs[0] = 0; // make sure $zero is zero
+			pc++;
+			break;
+		}
+	}
+	case 1: //sub opcode
+	{
+		sub(regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 2: //and opcode
+	{
+		and (regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 3://or opcode
+	{
+		or (regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 4: //xor opcode
+	{
+		xor (regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 5: //mul opcode
+	{
+		mul(regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 6: //sll opcode
+	{
+		sll(regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 7: //sra opcode
+	{
+		sra(regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 8: //srl opcode
+	{
+		srl(regs, cmd);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 9: //beq opcode
+	{
+		pc = beq(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 10: //bne opcode
+	{
+		pc = bne(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 11: //blt opcode
+	{
+		pc = blt(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 12: //bgt opcode
+	{
+		pc = bgt(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 13: //ble opcode
+	{
+		pc = ble(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 14: //bge opcode
+	{
+		pc = bge(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 15: //jal opcode
+	{
+		pc = jal(regs, cmd, pc);
+		regs[0] = 0;
+		break;
+	}
+	case 16: //lw opcode
+	{
+		lw(regs, cmd, mem);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 17: //sw opcode
+	{
+		sw(regs, cmd, mem);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 18: //ll opcode
+	{
+		ll(regs, cmd, mem);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 19: //sc opcode
+	{
+		sc(regs, cmd, mem);
+		regs[0] = 0;
+		pc++;
+		break;
+	}
+	case 20: //halt command, exit simulator
+	{
+		pc = -1;
+		break;
+	}
+	}
+	return pc;
 }
 
 //basic commands and instructions
@@ -92,6 +254,18 @@ void and (int* regs, Command cmd)
 void or (int* regs, Command cmd)
 {
 	regs[cmd.rd] = regs[cmd.rs] | regs[cmd.rt];
+}
+
+// xor command.
+void xor (int* regs, Command cmd)
+{
+	regs[cmd.rd] = regs[cmd.rs] ^ regs[cmd.rt];
+}
+
+// mul command.
+void mul (int* regs, Command cmd)
+{
+	regs[cmd.rd] = regs[cmd.rs] * regs[cmd.rt];
 }
 
 // sll command.
@@ -200,174 +374,19 @@ void sw(int* regs, Command cmd, unsigned int* mem)
 		mem[regs[cmd.rs] + regs[cmd.rt]] = regs[cmd.rd];
 }
 
-//reti command
-int reti(int* io_regs, int pc, int* reti_flag)// flag to know the status of reti 
+//ll command.
+void ll(int* regs, Command cmd, unsigned int* mem)
 {
-	if (*reti_flag != 0)
-		*reti_flag = 0;
-	else
-		*reti_flag = 1;
-	return io_regs[7];
+
 }
 
-//in command
-void in(int* io_regs, int* regs, Command cmd)
+//sw command.
+void sc(int* regs, Command cmd, unsigned int* mem)
 {
-	if (regs[cmd.rs] + regs[cmd.rt] < 18)
-		regs[cmd.rd] = io_regs[regs[cmd.rs] + regs[cmd.rt]];
-}
 
-// out command
-void out(int* io_regs, int* regs, Command cmd, int* disk, int* mem)
-{
-	if (regs[cmd.rs] + regs[cmd.rt] < 18)
-		if ((regs[cmd.rs] + regs[cmd.rt]) == 14)
-		{
-			io_regs[14] = regs[cmd.rd];
-			disk_handel(disk, io_regs, mem);
-		}
-		else
-			io_regs[regs[cmd.rs] + regs[cmd.rt]] = regs[cmd.rd];
 }
 
 
-int execution(int regs[], int io_regs[], int pc, Command cmd, unsigned int* mem, int* disk, int* reti_flag) {
-	switch (cmd.opcode)
-	{
-	case 0: //add opcode
-	{
-		if (cmd.rd == 0 && cmd.rs == 0 && cmd.rt == 0 && cmd.immiediate == 0)
-			break;
-		else {
-			add(regs, cmd);
-			regs[0] = 0; // make sure $zero is zero
-			pc++;
-			break;
-		}
-	}
-	case 1: //sub opcode
-	{
-		sub(regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 2: //and opcode
-	{
-		and (regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 3://or opcode
-	{
-		or (regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 4: //sll opcode
-	{
-		sll(regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 5: //sra opcode
-	{
-		sra(regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 6: //srl opcode***************
-	{
-		srl(regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 7: //beq opcode
-	{
-		pc = beq(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 8: //bne opcode
-	{
-		pc = bne(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 9: //blt opcode
-	{
-		pc = blt(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 10: //bgt opcode
-	{
-		pc = bgt(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 11: //ble opcode
-	{
-		pc = ble(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 12: //bge opcode
-	{
-		pc = bge(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 13: //jal opcode
-	{
-		pc = jal(regs, cmd, pc);
-		regs[0] = 0;
-		break;
-	}
-	case 14: //lw opcode
-	{
-		lw(regs, cmd, mem);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 15: //sw opcode
-	{
-		sw(regs, cmd, mem);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 16: //reti command
-	{
-		pc = reti(io_regs, pc, reti_flag);
-		break;
-	}
-	case 17://in command
-	{
-		in(io_regs, regs, cmd);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 18://out command
-	{
-		out(io_regs, regs, cmd, disk, mem);
-		regs[0] = 0;
-		pc++;
-		break;
-	}
-	case 19: //halt command, we need to exit simulator
-	{
-		pc = -1;
-		break;
-	}
-	}
-	return pc;
-}
+
+
 

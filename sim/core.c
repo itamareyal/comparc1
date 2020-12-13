@@ -1,5 +1,7 @@
 /*
-instructions.h
+core.c
+
+Hold functions to dispatch and manage cores in the program
 */
 
 
@@ -18,3 +20,11 @@ instructions.h
 										DECLARATION
 ------------------------------------------------------------------------------------*/
 
+
+
+/*------------------------------------------------------------------------------------
+										IMPLEMENTATION
+------------------------------------------------------------------------------------*/
+// snoop function- update tsram
+
+// ask for bus function

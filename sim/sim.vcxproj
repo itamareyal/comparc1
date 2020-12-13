@@ -139,12 +139,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="core.c" />
     <ClCompile Include="input.c" />
     <ClCompile Include="intructions.c" />
     <ClCompile Include="output.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="core.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="instructions.h" />
     <ClInclude Include="output.h" />
