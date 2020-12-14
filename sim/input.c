@@ -23,7 +23,7 @@ input.c
 /*------------------------------------------------------------------------------------
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
-
+//check the arguments no matter what return the right names and indexes
 char ** check_args(int argc, char* argv[]) {
 
 	if (argc == 1) { // no cmd args given
@@ -58,7 +58,7 @@ FILE* open_file(FILE* fp, char* address, char mode) {
 // open imem & mem files and read them to arrays
 int open_mem_files(int argc, char* argv[], unsigned int imem_0[], unsigned int imem_1[], unsigned int imem_2[], unsigned int imem_3[], unsigned int mem[]) {
 	
-	char* args[SIZE_ARGV] = check_args(argc, argv);
+	char** args = check_args(argc, argv);
 	read_memin_imem(imem_0, args[1]);
 	read_memin_imem(imem_1, args[2]);
 	read_memin_imem(imem_2, args[3]);
@@ -78,6 +78,15 @@ int open_trace_files(char* args[], FILE *core_0_trace, FILE* core_1_trace, FILE*
 	open_file(bus_trace, args[15], mode);
 
 	return 0;
+}
+
+void close_trace_files(FILE* core_0_trace, FILE* core_1_trace, FILE* core_2_trace, FILE* core_3_trace, FILE* bus_trace) 
+{
+	fclose(core_0_trace);
+	fclose(core_1_trace);
+	fclose(core_2_trace);
+	fclose(core_3_trace);
+	fclose(bus_trace);
 }
 
 int read_memin_imem(unsigned int* mem, char* address)

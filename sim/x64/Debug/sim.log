@@ -1,0 +1,16 @@
+﻿  core.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(31,55): warning C4028: formal parameter 4 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(31,75): warning C4028: formal parameter 5 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(31,86): warning C4028: formal parameter 6 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(31,108): warning C4029: declared formal parameter list different from definition
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(43,23): warning C4013: 'create_line_for_trace' undefined; assuming extern returning int
+  main.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(51,7): warning C4101: 'last_bus': unreferenced local variable
+  output.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(32,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(32,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(47,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(47,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+  Generating Code...
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(49): warning C4716: 'core_execution': must return a value
+  sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\x64\Debug\sim.exe

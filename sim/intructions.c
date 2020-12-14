@@ -23,20 +23,36 @@ intructions.c
 /*------------------------------------------------------------------------------------
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
-
+//this function sign extend the value of imm
+int sign_extend(int imm)
+{
+	int value = (0x00000FFF & imm);
+	int mask = 0x00000800;
+	if (mask & imm) {
+		value += 0xFFFFF000;
+	}
+	return value;
+}
+// this function extracts one byte from number
+unsigned int get_byte(unsigned int num, int pos)
+{
+	unsigned int mask = 0xf << (pos * 4);
+	return ((num & mask) >> (pos * 4));
+}
 // put stall when the comaand is not valid
-Command put_stall(Command cmd)
+Command put_stall(Command cmd,int core_id)
 {
 	cmd.opcode = 0;
 	cmd.rd = 0;
 	cmd.rs = 0;
 	cmd.rt = 0;
 	cmd.immiediate = 1;
+	cmd.core_id = core_id;
 	return cmd;
 }
 
 // this function creates a struct Command from a string in memory
-Command line_to_command(unsigned int inst)
+Command line_to_command(unsigned int inst,int core_id)
 {
 	Command cmd;
 	cmd.opcode = (get_byte(inst, 7) * 16) + get_byte(inst, 6);
@@ -48,25 +64,20 @@ Command line_to_command(unsigned int inst)
 	if (cmd.opcode < 9 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
 	{
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15 || cmd.rd == 1)
-			cmd = put_stall(cmd);
+			cmd = put_stall(cmd,core_id);
 	}
 	if (cmd.opcode > 8 && cmd.opcode < 15)//if opcode branch we need to check few expations
 	{
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
-			cmd = put_stall(cmd);
+			cmd = put_stall(cmd, core_id);
 	}
 	if (cmd.opcode == 15)// jal; check only cmd.rd
 	{
 		if (cmd.rd > 15)
-			cmd = put_stall(cmd);
-	}
-	if (cmd.opcode == 15 || cmd.opcode == 18)//if opcode sw check only registers
-	{
-		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
-			cmd = put_stall(cmd);
+			cmd = put_stall(cmd, core_id);
 	}
 	if (cmd.opcode > 20) //how to handle error opcode that not exist
-		cmd = put_stall(cmd);
+		cmd = put_stall(cmd, core_id);
 
 	return cmd;
 }
@@ -354,14 +365,14 @@ int jal(int* regs, Command cmd, int pc)
 //lw command
 void lw(int* regs, Command cmd, unsigned int* mem)
 {
-	if (regs[cmd.rs] + regs[cmd.rt] < MEM_SIZE)
+	if (regs[cmd.rs] + regs[cmd.rt] < MAIN_MEM_SIZE)
 		regs[cmd.rd] = mem[regs[cmd.rs] + regs[cmd.rt]];
 }
 
 //sw command.
 void sw(int* regs, Command cmd, unsigned int* mem)
 {
-	if (regs[cmd.rs] + regs[cmd.rt] < MEM_SIZE)
+	if (regs[cmd.rs] + regs[cmd.rt] < MAIN_MEM_SIZE)
 		mem[regs[cmd.rs] + regs[cmd.rt]] = regs[cmd.rd];
 }
 
@@ -376,6 +387,7 @@ void sc(int* regs, Command cmd, unsigned int* mem)
 {
 
 }
+
 
 
 

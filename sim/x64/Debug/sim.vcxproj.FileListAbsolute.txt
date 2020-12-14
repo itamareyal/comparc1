@@ -1,0 +1,2 @@
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\x64\Debug\sim.exe
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\x64\Debug\sim.pdb
