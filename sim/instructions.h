@@ -20,8 +20,6 @@ typedef struct _command {
 	unsigned int rs;
 	unsigned int rt;
 	unsigned int immiediate;
-	unsigned int pipeline;
-	unsigned int stall_flag;
 	unsigned int core_id;
 }Command;
 
@@ -33,9 +31,9 @@ int sign_extend(int imm);
 
 unsigned int get_byte(unsigned int num, int pos);
 
-Command put_stall(Command cmd);
+Command put_stall(Command cmd, int core_id);
 
-Command line_to_command(unsigned int inst);
+Command line_to_command(unsigned int inst,int core_id);
 
 int execution(int regs[], int pc, Command cmd, unsigned int* mem);
 

@@ -40,18 +40,19 @@ unsigned int get_byte(unsigned int num, int pos)
 	return ((num & mask) >> (pos * 4));
 }
 // put stall when the comaand is not valid
-Command put_stall(Command cmd)
+Command put_stall(Command cmd,int core_id)
 {
 	cmd.opcode = 0;
 	cmd.rd = 0;
 	cmd.rs = 0;
 	cmd.rt = 0;
 	cmd.immiediate = 1;
+	cmd.core_id = core_id;
 	return cmd;
 }
 
 // this function creates a struct Command from a string in memory
-Command line_to_command(unsigned int inst)
+Command line_to_command(unsigned int inst,int core_id)
 {
 	Command cmd;
 	cmd.opcode = (get_byte(inst, 7) * 16) + get_byte(inst, 6);
@@ -63,25 +64,20 @@ Command line_to_command(unsigned int inst)
 	if (cmd.opcode < 9 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
 	{
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15 || cmd.rd == 1)
-			cmd = put_stall(cmd);
+			cmd = put_stall(cmd,core_id);
 	}
 	if (cmd.opcode > 8 && cmd.opcode < 15)//if opcode branch we need to check few expations
 	{
 		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
-			cmd = put_stall(cmd);
+			cmd = put_stall(cmd, core_id);
 	}
 	if (cmd.opcode == 15)// jal; check only cmd.rd
 	{
 		if (cmd.rd > 15)
-			cmd = put_stall(cmd);
-	}
-	if (cmd.opcode == 15 || cmd.opcode == 18)//if opcode sw check only registers
-	{
-		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
-			cmd = put_stall(cmd);
+			cmd = put_stall(cmd, core_id);
 	}
 	if (cmd.opcode > 20) //how to handle error opcode that not exist
-		cmd = put_stall(cmd);
+		cmd = put_stall(cmd, core_id);
 
 	return cmd;
 }

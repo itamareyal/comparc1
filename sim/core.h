@@ -46,12 +46,20 @@ typedef struct _pipe {
 ////run all the 4 cores parallel
 //void manage_cores(int pc, int core_id, int inst, unsigned int* imem, int* regs, FILE* fp_trace);
 
+
+//execution of one core.
 int core_execution(int cycle, int pc, int core_id, unsigned int* imem, int* regs, PIPE_ptr pipe, FILE* fp_trace);
 
+//function for the snoop between the cores.
 void snoop_bus(Bus last_bus, TSRAM ts);
 
+//initilize one pipeline
 PIPE_ptr init_pipe(int core_id);
 
+//initiilize all the pipelines of all the cores
 void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIPE_ptr pipe_3);
+
+//each cycle update the pipline with the PC
+void update_pipeline(PIPE_ptr pipe, int pc);
 
 

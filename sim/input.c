@@ -80,6 +80,15 @@ int open_trace_files(char* args[], FILE *core_0_trace, FILE* core_1_trace, FILE*
 	return 0;
 }
 
+void close_trace_files(FILE* core_0_trace, FILE* core_1_trace, FILE* core_2_trace, FILE* core_3_trace, FILE* bus_trace) 
+{
+	fclose(core_0_trace);
+	fclose(core_1_trace);
+	fclose(core_2_trace);
+	fclose(core_3_trace);
+	fclose(bus_trace);
+}
+
 int read_memin_imem(unsigned int* mem, char* address)
 {
 	FILE* fp = NULL;

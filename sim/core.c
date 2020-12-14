@@ -10,7 +10,6 @@ Hold functions to dispatch and manage cores in the program
 ------------------------------------------------------------------------------------*/
 #include <stdio.h>
 #include "core.h"
-#include "instructions.h"
 
 /*------------------------------------------------------------------------------------
 										DEFINES
@@ -37,15 +36,13 @@ void manage_cores(int cycle, int pc, int core_id, int inst, unsigned int* imem, 
 // core loop
 int core_execution(int cycle, int pc, int core_id, unsigned int *imem, int *regs,PIPE_ptr pipe, FILE* fp_trace) {
 	int inst = imem[pc];
-	Command cmd = line_to_command(inst); // create Command struct
-
+	Command cmd = line_to_command(inst, core_id); // create Command struct
+	update_pipeline(pipe, pc);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle,pipe);//append to trace file
 	fprintf(fp_trace, "%s\n", line_for_trace);
 	regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
-
-	//pc = execution(regs, pc, cmd);
-
+	pc = execution(regs, pc, cmd,imem);
 }
 
 
@@ -87,6 +84,16 @@ void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIP
 	pipe_2 = init_pipe(2);
 	pipe_3 = init_pipe(3);
 }
+
+void update_pipeline(PIPE_ptr pipe, int pc)
+{
+	pipe->WB = pipe->MEM;
+	pipe->MEM = pipe->EX;
+	pipe->EX = pipe->ID;
+	pipe->ID = pipe->IF;
+	pipe->IF = pc;
+}
+	
 
 
 // ask for bus function and execute
