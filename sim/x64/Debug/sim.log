@@ -1,0 +1,37 @@
+﻿  core.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(41,23): warning C4013: 'create_line_for_trace' undefined; assuming extern returning int
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(43,23): warning C4013: 'sign_extend' undefined; assuming extern returning int
+  input.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(51,24): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(51,22): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(51,39): warning C4047: 'function': 'const char *' differs in levels of indirection from 'char'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(51,35): warning C4024: 'fopen_s': different types for formal and actual parameter 3
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(51,40): warning C4047: '==': 'void *' differs in levels of indirection from 'errno_t'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(73,1): warning C4047: 'initializing': 'char' differs in levels of indirection from 'char [2]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(86,1): warning C4047: 'initializing': 'char' differs in levels of indirection from 'char [2]'
+  intructions.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\intructions.c(42,24): warning C4013: 'get_byte' undefined; assuming extern returning int
+  output.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(35,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(35,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(50,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(50,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,35): warning C4047: 'function': 'const size_t' differs in levels of indirection from 'char [5]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,29): warning C4024: 'sprintf_s': different types for formal and actual parameter 2
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,48): warning C4013: 'sign_extend' undefined; assuming extern returning int
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,53): warning C4047: 'function': 'const char *const ' differs in levels of indirection from 'int'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,48): warning C4024: 'sprintf_s': different types for formal and actual parameter 3
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(87,25): warning C4013: 'neg_to_pos' undefined; assuming extern returning int
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(90,34): warning C4047: 'function': 'const size_t' differs in levels of indirection from 'char [5]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(90,28): warning C4024: 'sprintf_s': different types for formal and actual parameter 2
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(90,44): warning C4047: 'function': 'const char *const ' differs in levels of indirection from 'int'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(90,36): warning C4024: 'sprintf_s': different types for formal and actual parameter 3
+  main.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(46,7): warning C4101: 'last_bus': unreferenced local variable
+  Generating Code...
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\input.c(41): warning C4172: returning address of local variable or temporary: args
+core.obj : error LNK2019: unresolved external symbol sign_extend referenced in function core_execution
+output.obj : error LNK2001: unresolved external symbol sign_extend
+intructions.obj : error LNK2019: unresolved external symbol get_byte referenced in function line_to_command
+output.obj : error LNK2019: unresolved external symbol neg_to_pos referenced in function create_line_for_trace
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\x64\Debug\sim.exe : fatal error LNK1120: 3 unresolved externals

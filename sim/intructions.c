@@ -354,14 +354,14 @@ int jal(int* regs, Command cmd, int pc)
 //lw command
 void lw(int* regs, Command cmd, unsigned int* mem)
 {
-	if (regs[cmd.rs] + regs[cmd.rt] < MEM_SIZE)
+	if (regs[cmd.rs] + regs[cmd.rt] < MAIN_MEM_SIZE)
 		regs[cmd.rd] = mem[regs[cmd.rs] + regs[cmd.rt]];
 }
 
 //sw command.
 void sw(int* regs, Command cmd, unsigned int* mem)
 {
-	if (regs[cmd.rs] + regs[cmd.rt] < MEM_SIZE)
+	if (regs[cmd.rs] + regs[cmd.rt] < MAIN_MEM_SIZE)
 		mem[regs[cmd.rs] + regs[cmd.rt]] = regs[cmd.rd];
 }
 

@@ -42,7 +42,7 @@ void core_execution(int pc, int core_id, int inst, unsigned int *imem, int *regs
 	fprintf(fp_trace, "%s\n", line_for_trace);
 	regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
 
-	pc = execution(regs, pc, cmd, mem);
+	//pc = execution(regs, pc, cmd);
 
 }
 
