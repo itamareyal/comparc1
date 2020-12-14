@@ -11,6 +11,11 @@ core.h
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
+#define I_MEM_SIZE 1024
+#define DSRAM_SIZE 256
+#define TSRAM_SIZE 256
+#define MAIN_MEM_SIZE 1048576 // check for updates
+
 typedef struct _bus {
 	unsigned int bus_origid; //3 bits. 0-3 cores; 4 mem
 	unsigned int bus_cmd;	 //2 bits
@@ -23,6 +28,14 @@ typedef struct _tsram {
 	unsigned int tag;		 //12 bits
 }TSRAM;
 
+typedef struct _pipe {
+	int core_id;
+	Command IF;
+	Command ID;
+	Command EX;
+	Command MEM;
+	Command WB;
+}PIPE;
 
 /*------------------------------------------------------------------------------------
 										DECLARATION

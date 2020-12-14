@@ -12,10 +12,7 @@ main.c
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
-#define I_MEM_SIZE 1024
-#define DSRAM_SIZE 256
-#define TSRAM_SIZE 256
-#define MAIN_MEM_SIZE 1048576 // check for updates
+
 
 /*------------------------------------------------------------------------------------
 										DECLARATION
@@ -45,7 +42,8 @@ int main(int argc, char* argv[]) {
 	unsigned int mem[MAIN_MEM_SIZE] = { 0 }; // initialize main memory
 
 	Bus* last_bus; // holds last trans on the bus for snooping at next iteration
-	
+	int bus_free = 0; // 0-free for trans; 1-busy, wait for flush
+
 	FILE* core_0_trace = NULL;
 	FILE* core_1_trace = NULL;
 	FILE* core_2_trace = NULL;
