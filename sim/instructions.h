@@ -29,6 +29,10 @@ typedef struct _command {
 /*------------------------------------------------------------------------------------
 										DECLARATION
 ------------------------------------------------------------------------------------*/
+int sign_extend(int imm);
+
+unsigned int get_byte(unsigned int num, int pos);
+
 Command put_stall(Command cmd);
 
 Command line_to_command(unsigned int inst);

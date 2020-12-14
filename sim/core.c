@@ -27,14 +27,16 @@ Hold functions to dispatch and manage cores in the program
 /*------------------------------------------------------------------------------------
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
+//run all the 4 cores parallel
+void manage_cores(int pc, int core_id, int inst, unsigned int* imem, int* regs, FILE* fp_trace) {
+	/*int pc_0, pc_1, pc_2, pc_3 = 0;
+	core_execution(pc_0,)*/
+
+}
+
 // core loop
-void core_execution(int pc, int core_id, int inst, unsigned int *imem, int *regs, FILE* fp_trace) {
-	if (pc <= I_MEM_SIZE - 1)
-		inst = imem[pc];
-	else
-	{
-		pc = -1;
-	}
+int core_execution(int pc, int core_id, unsigned int *imem, int *regs, FILE* fp_trace) {
+	int inst = imem[pc];
 	Command cmd = line_to_command(inst); // create Command struct
 
 	char line_for_trace[200] = { 0 }; //create line for trace file

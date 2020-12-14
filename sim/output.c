@@ -25,9 +25,6 @@ output.c
 ------------------------------------------------------------------------------------*/
 
 
-
-
-
 // this function creates regout file
 void create_regout(int regs[], char file_name[]) {
 	FILE* fp_regout=NULL;
@@ -78,7 +75,7 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned i
 		int temp_reg = 0;
 		if (i == 1)// for imm
 		{
-			sprintf_s(temp_reg_char, "%08X", sign_extend(imm));//change to hex
+			sprintf_s(temp_reg_char, BUFFER_MAX_SIZE,"%08X", sign_extend(imm));//change to hex
 			sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE,temp_reg_char);//add to line
 			sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE," ");
 			continue;
@@ -87,7 +84,7 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned i
 			temp_reg = neg_to_pos(regs[i]);
 		else
 			temp_reg = regs[i];
-		sprintf_s(temp_reg_char, "%08X", temp_reg);//change to hex
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%08X", temp_reg);//change to hex
 		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
 		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
 	}
@@ -100,4 +97,14 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned i
 		temp_reg = regs[i];
 	sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%.8X", temp_reg);
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);
+}
+
+//A function that converts a negative number to positive in 2's compliment
+int neg_to_pos(signed int num)
+{
+	num = abs(num);
+	signed int mask = 0xffffffff;
+	num = num ^ mask; // invert all bits
+	num++; // add 1 as in 2's comp
+	return num;
 }

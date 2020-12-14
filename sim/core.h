@@ -41,4 +41,9 @@ typedef struct _pipe {
 /*------------------------------------------------------------------------------------
 										DECLARATION
 ------------------------------------------------------------------------------------*/
+//run all the 4 cores parallel
+void manage_cores(int pc, int core_id, int inst, unsigned int* imem, int* regs, FILE* fp_trace);
 
+int core_execution(int pc, int core_id, unsigned int* imem, int* regs, FILE* fp_trace);
+
+void snoop_bus(Bus last_bus, TSRAM ts);

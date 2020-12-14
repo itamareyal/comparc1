@@ -23,7 +23,22 @@ intructions.c
 /*------------------------------------------------------------------------------------
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
-
+//this function sign extend the value of imm
+int sign_extend(int imm)
+{
+	int value = (0x00000FFF & imm);
+	int mask = 0x00000800;
+	if (mask & imm) {
+		value += 0xFFFFF000;
+	}
+	return value;
+}
+// this function extracts one byte from number
+unsigned int get_byte(unsigned int num, int pos)
+{
+	unsigned int mask = 0xf << (pos * 4);
+	return ((num & mask) >> (pos * 4));
+}
 // put stall when the comaand is not valid
 Command put_stall(Command cmd)
 {
@@ -376,6 +391,7 @@ void sc(int* regs, Command cmd, unsigned int* mem)
 {
 
 }
+
 
 
 

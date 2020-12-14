@@ -30,4 +30,6 @@ void create_memout(unsigned int* mem, char file_name[]);
 
 void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int inst, int imm);
 
+int neg_to_pos(signed int num);
+
 

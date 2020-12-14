@@ -14,7 +14,7 @@ main.c
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
-
+#define NUMBER_REGISTER_SIZE 16
 
 /*------------------------------------------------------------------------------------
 										DECLARATION
@@ -26,6 +26,11 @@ main.c
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
 int main(int argc, char* argv[]) {
+	int regs_0[NUMBER_REGISTER_SIZE] = { 0 };
+	int regs_1[NUMBER_REGISTER_SIZE] = { 0 };
+	int regs_2[NUMBER_REGISTER_SIZE] = { 0 };
+	int regs_3[NUMBER_REGISTER_SIZE] = { 0 };
+
 	unsigned int imem_0[I_MEM_SIZE] = { 0 }; // initialize insruction memory 0
 	unsigned int imem_1[I_MEM_SIZE] = { 0 }; // initialize insruction memory 1
 	unsigned int imem_2[I_MEM_SIZE] = { 0 }; // initialize insruction memory 2
@@ -73,7 +78,10 @@ int main(int argc, char* argv[]) {
 	// multi core execution loop. exits when all cores are done. 
 	while ((pc_0 != -1) && (pc_1 != -1) && (pc_2 != -1) && (pc_3 != -1)) {
 		// execute for each core
-
+		pc_0 = core_execution(pc_0, 0, imem_0, regs_0, core_0_trace);
+		pc_1 = core_execution(pc_1, 1, imem_1, regs_1, core_1_trace);
+		pc_2 = core_execution(pc_2, 2, imem_2, regs_2, core_2_trace);
+		pc_3 = core_execution(pc_3, 3, imem_3, regs_3, core_3_trace);
 		// execute single bus transaction (if called)
 
 		// write to live trace files
