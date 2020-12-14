@@ -1,0 +1,6 @@
+﻿  output.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(32,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(32,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(47,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(47,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
+  sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe

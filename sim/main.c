@@ -57,10 +57,16 @@ int main(int argc, char* argv[]) {
 	FILE* core_3_trace = NULL;
 	FILE* bus_trace = NULL;
 
+	int cycle = 0;
 	int pc_0 = 0;
 	int pc_1 = 0;
 	int pc_2 = 0;
 	int pc_3 = 0;
+
+	PIPE_ptr pipe_0 = NULL;
+	PIPE_ptr pipe_1 = NULL;
+	PIPE_ptr pipe_2 = NULL;
+	PIPE_ptr pipe_3 = NULL;
 
 	// read mem & imem files to arrays
 	if (0 != open_mem_files(argc, argv, imem_0, imem_1, imem_2, imem_3, mem)){
@@ -74,14 +80,16 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
+	initilize_pipelines(pipe_0, pipe_1, pipe_2, pipe_3);
 
 	// multi core execution loop. exits when all cores are done. 
 	while ((pc_0 != -1) && (pc_1 != -1) && (pc_2 != -1) && (pc_3 != -1)) {
 		// execute for each core
-		pc_0 = core_execution(pc_0, 0, imem_0, regs_0, core_0_trace);
-		pc_1 = core_execution(pc_1, 1, imem_1, regs_1, core_1_trace);
-		pc_2 = core_execution(pc_2, 2, imem_2, regs_2, core_2_trace);
-		pc_3 = core_execution(pc_3, 3, imem_3, regs_3, core_3_trace);
+		pc_0 = core_execution(cycle, pc_0, 0, imem_0, regs_0,pipe_0, core_0_trace);
+		pc_1 = core_execution(cycle, pc_1, 1, imem_1, regs_1, pipe_1, core_1_trace);
+		pc_2 = core_execution(cycle, pc_2, 2, imem_2, regs_2, pipe_2, core_2_trace);
+		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, pipe_3, core_3_trace);
+		cycle++;
 		// execute single bus transaction (if called)
 
 		// write to live trace files

@@ -58,28 +58,41 @@ void create_memout(unsigned int* mem, char file_name[]) {
 	fclose(fp_memout); // close file
 }
 
-void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int inst, int imm)
+void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int cycle, PIPE_ptr pipe)
 {
+	//initinlize parameters
 	int i;
 	char inst_line[BUFFER_MAX_SIZE];
-	char pc_char[MAX_PC_CHAR] = { 0 };
+	char cycle_char[MAX_PC_CHAR] = { 0 };
 	char temp_reg_char[BUFFER_MAX_SIZE] = { 0 };
-	sprintf_s(pc_char, MAX_PC_CHAR, "%08X", pc);
-	sprintf_s(inst_line, BUFFER_MAX_SIZE, "%08X", inst);
-	sprintf_s(line_for_trace, BUFFER_MAX_SIZE, pc_char); //add pc to line
+
+	//add cycle and fetch to the output line
+	sprintf_s(cycle_char, MAX_PC_CHAR, "%08X", cycle);
+	sprintf_s(inst_line, BUFFER_MAX_SIZE, "%08X", pc);
+	sprintf_s(line_for_trace, BUFFER_MAX_SIZE, cycle_char); //add pc to line
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, inst_line); //add opcode to line
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-
-	for (i = 0; i < 15; i++) { //add registers to line
+	//handle pipeline. add each value manuelly
+	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->IF);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->ID);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->EX);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE,pipe->MEM);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->WB);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	
+	//add registers to line from R2 to R14
+	for (i = 1; i < 15; i++) { 
 		int temp_reg = 0;
-		if (i == 1)// for imm
-		{
-			sprintf_s(temp_reg_char, BUFFER_MAX_SIZE,"%08X", sign_extend(imm));//change to hex
-			sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE,temp_reg_char);//add to line
-			sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE," ");
-			continue;
-		}
 		if (regs[i] < 0)
 			temp_reg = neg_to_pos(regs[i]);
 		else
