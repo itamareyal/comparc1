@@ -60,6 +60,7 @@ Command line_to_command(unsigned int inst,int core_id)
 	cmd.rs = get_byte(inst, 4);
 	cmd.rt = get_byte(inst, 3);
 	cmd.immiediate = (get_byte(inst, 2) * 16 * 16) + (get_byte(inst, 1) * 16) + get_byte(inst, 0);
+	cmd.core_id = core_id;
 	//handle all out of bounds future problems
 	if (cmd.opcode < 9 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
 	{

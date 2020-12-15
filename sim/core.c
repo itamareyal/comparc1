@@ -8,7 +8,6 @@ Hold functions to dispatch and manage cores in the program
 /*------------------------------------------------------------------------------------
 										INCLUDE
 ------------------------------------------------------------------------------------*/
-#include <stdio.h>
 #include "core.h"
 
 /*------------------------------------------------------------------------------------
@@ -45,8 +44,6 @@ int core_execution(int cycle, int pc, int core_id, unsigned int *imem, int *regs
 	pc = execution(regs, pc, cmd,imem);
 }
 
-
-
 // snoop function- update tsram
 void snoop_bus(Bus last_bus, TSRAM ts) {
 	switch (last_bus.bus_cmd) {
@@ -65,6 +62,7 @@ void snoop_bus(Bus last_bus, TSRAM ts) {
 	}
 	}
 }
+
 //initilize the pipeline for the rest of the program
 PIPE_ptr init_pipe(int core_id) 
 {
