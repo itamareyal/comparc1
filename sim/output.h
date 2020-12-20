@@ -33,7 +33,10 @@ void write_output_files(char **args,int *regs_0,int *regs_1,int *regs_2,int *reg
 	, unsigned int *mem);
 
 //create the tsram and dsram output file.
-void create_tsram_dsram_output(unsigned int* tsram, char file_name[]);
+void create_dsram_output(unsigned int* dsram, char file_name[]);
+
+//create the tsram and dsram output file.
+void create_tsram_output(unsigned int* tsram, char file_name[]);
 
 //function to create the regout file
 void create_regout(int regs[], char file_name[]);

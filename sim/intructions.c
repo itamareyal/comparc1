@@ -33,6 +33,7 @@ int sign_extend(int imm)
 	}
 	return value;
 }
+
 // this function extracts one byte from number
 unsigned int get_byte(unsigned int num, int pos)
 {
