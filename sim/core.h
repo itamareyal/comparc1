@@ -7,27 +7,26 @@ core.h
 ------------------------------------------------------------------------------------*/
 #include <stdio.h>
 #include "instructions.h"
+#include "HardCodedData.h"
 
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
-#define I_MEM_SIZE 1024
-#define DSRAM_SIZE 256
-#define TSRAM_SIZE 256
-#define MAIN_MEM_SIZE 1048576 // check for updates
-#define MAX_LINE_TRACE 150
+
 
 typedef struct _bus {
 	unsigned int bus_origid; //3 bits. 0-3 cores; 4 mem
 	unsigned int bus_cmd;	 //2 bits
 	unsigned int bus_addr;	 //20 bits of address
 	unsigned int bus_data;	 //32 bits of data. 1 word
-}Bus;
+	int flush_cycle;
+	int data_owner;
+}Bus, *Bus_ptr;
 
 typedef struct _tsram {
 	unsigned int msi;		 //2 bits 0-i 1-s 2-m
 	unsigned int tag;		 //12 bits
-}TSRAM;
+}TSRAM, *TSRAM_ptr;
 
 //holds all the information about the commands inside the pipeline
 typedef struct _pipe {
@@ -47,10 +46,17 @@ typedef struct _pipe {
 
 
 //execution of one core.
-int core_execution(int cycle, int pc, int core_id, unsigned int* imem, int* regs, PIPE_ptr pipe, FILE* fp_trace);
+int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* regs, 
+	PIPE_ptr pipe, FILE* fp_trace, Bus_ptr last_bus, unsigned int dsram, TSRAM_ptr tsram[]);
 
 //function for the snoop between the cores.
-void snoop_bus(Bus last_bus, TSRAM ts);
+void snoop_bus(Bus_ptr last_bus, TSRAM_ptr tsram[]);
+
+// execution of all the commands except the flush
+void execution_bus(Bus_ptr last_bus, TSRAM_ptr tsram);
+
+// return the data requested by a core in read or readx
+void check_flush(Bus_ptr last_bus, TSRAM_ptr tsram, unsigned int mem[], int* bus_busy, int* cycle);
 
 //initilize one pipeline
 PIPE_ptr init_pipe(int core_id);
@@ -61,4 +67,12 @@ void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIP
 //each cycle update the pipline with the PC
 void update_pipeline(PIPE_ptr pipe, int pc);
 
+//function for initilize the bus for all the cores.
+Bus_ptr initilize_bus();
+
+//get the tag from the address in memory
+int get_tag(int address);
+
+//get the tag from the tag in memory
+int get_index(int address);
 

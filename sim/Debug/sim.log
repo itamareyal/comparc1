@@ -1,22 +1,2 @@
-﻿  core.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(41,23): warning C4013: 'create_line_for_trace' undefined; assuming extern returning int
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(71,17): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(72,17): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(73,17): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(74,18): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(75,17): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(92,15): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-  intructions.c
-  main.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(57,7): warning C4101: 'last_bus': unreferenced local variable
-  output.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(48,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(48,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(66,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(66,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(81,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-  Generating Code...
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(76): warning C4716: 'init_pipe': must return a value
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(45): warning C4716: 'core_execution': must return a value
+﻿  output.c
   sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe

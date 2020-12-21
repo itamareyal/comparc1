@@ -25,7 +25,7 @@ output.c
 ------------------------------------------------------------------------------------*/
 void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int* regs_3,
 	unsigned int* dsram_0, unsigned int* dsram_1, unsigned int* dsram_2, unsigned int* dsram_3,
-	unsigned int* tsram_0, unsigned int* tsram_1, unsigned int* tsram_2, unsigned int* tsram_3
+	TSRAM_ptr tsram_0[], TSRAM_ptr tsram_1[], TSRAM_ptr tsram_2[], TSRAM_ptr tsram_3[]
 	, unsigned int* mem)
 {
 	create_memout(mem, args[6]);
@@ -33,28 +33,45 @@ void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int*
 	create_regout(regs_1, args[8]);
 	create_regout(regs_2, args[9]);
 	create_regout(regs_3, args[10]);
-	create_tsram_dsram_output(dsram_0, args[16]);
-	create_tsram_dsram_output(dsram_1, args[17]);
-	create_tsram_dsram_output(dsram_2, args[18]);
-	create_tsram_dsram_output(dsram_3, args[19]);
-	create_tsram_dsram_output(tsram_0, args[20]);
-	create_tsram_dsram_output(tsram_1, args[21]);
-	create_tsram_dsram_output(tsram_2, args[22]);
-	create_tsram_dsram_output(tsram_3, args[23]);
+	create_dsram_output(dsram_0, args[16]);
+	create_dsram_output(dsram_1, args[17]);
+	create_dsram_output(dsram_2, args[18]);
+	create_dsram_output(dsram_3, args[19]);
+	create_tsram_output(tsram_0, args[20]);
+	create_tsram_output(tsram_1, args[21]);
+	create_tsram_output(tsram_2, args[22]);
+	create_tsram_output(tsram_3, args[23]);
 	//still remain to build a function for the stats
 }
 
-void create_tsram_dsram_output(unsigned int* tsram, char file_name[]) {
+void create_dsram_output(unsigned int* dsram, char file_name[]) {
 	FILE* fp_memout = NULL;
-	fopen_s(fp_memout, file_name, "w"); // open new file
+
+	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
 	{
 		printf("error opening file");
 		exit(1);
 	}
-	for (int i = 0; i < DSRAM_TSRAM_SIZE; i++) // print memory to file
+	for (int i = 0; i < DSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%08X\n", *tsram);
+		fprintf(fp_memout, "%08X\n", *dsram);
+		dsram++;
+	}
+	fclose(fp_memout); // close file
+}
+
+void create_tsram_output(TSRAM_ptr tsram[], char file_name[]) {
+	FILE* fp_memout = NULL;
+	fopen_s(&fp_memout, file_name, "w"); // open new file
+	if (fp_memout == NULL) // handle error
+	{
+		printf("error opening file");
+		exit(1);
+	}
+	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
+	{
+		fprintf(fp_memout, "%04X\n", tsram[i]->msi+tsram[i]->tag);
 		tsram++;
 	}
 	fclose(fp_memout); // close file
@@ -64,7 +81,7 @@ void create_tsram_dsram_output(unsigned int* tsram, char file_name[]) {
 void create_regout(int regs[], char file_name[]) {
 	FILE* fp_regout=NULL;
 
-	fopen_s(fp_regout, file_name, "w"); // open new file
+	fopen_s(&fp_regout, file_name, "w"); // open new file
 	if (fp_regout == NULL) // handle error
 	{
 		printf("error opening file");
@@ -78,8 +95,8 @@ void create_regout(int regs[], char file_name[]) {
 }
 
 void create_memout(unsigned int* mem, char file_name[]) {
-	FILE* fp_memout=NULL;
-	fopen_s(fp_memout, file_name, "w"); // open new file
+	FILE* fp_memout = NULL;
+	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
 	{
 		printf("error opening file");
@@ -97,17 +114,17 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned i
 {
 	//initinlize parameters
 	int i;
-	char inst_line[BUFFER_MAX_SIZE];
+	//char inst_line[BUFFER_MAX_SIZE];
 	char cycle_char[MAX_PC_CHAR] = { 0 };
 	char temp_reg_char[BUFFER_MAX_SIZE] = { 0 };
 
 	//add cycle and fetch to the output line
 	sprintf_s(cycle_char, MAX_PC_CHAR, "%08X", cycle);
-	sprintf_s(inst_line, BUFFER_MAX_SIZE, "%08X", pc);
+	//sprintf_s(inst_line, BUFFER_MAX_SIZE, "%08X", pc);
 	sprintf_s(line_for_trace, BUFFER_MAX_SIZE, cycle_char); //add pc to line
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, inst_line); //add opcode to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	//sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, inst_line); //add opcode to line
+	//sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
 	//handle pipeline. add each value manuelly
 	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->IF);
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
