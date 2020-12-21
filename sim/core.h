@@ -7,21 +7,20 @@ core.h
 ------------------------------------------------------------------------------------*/
 #include <stdio.h>
 #include "instructions.h"
+#include "HardCodedData.h"
 
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
-#define I_MEM_SIZE 1024
-#define DSRAM_SIZE 256
-#define TSRAM_SIZE 256
-#define MAIN_MEM_SIZE 1048576 // check for updates
-#define MAX_LINE_TRACE 150
+
 
 typedef struct _bus {
 	unsigned int bus_origid; //3 bits. 0-3 cores; 4 mem
 	unsigned int bus_cmd;	 //2 bits
 	unsigned int bus_addr;	 //20 bits of address
 	unsigned int bus_data;	 //32 bits of data. 1 word
+	int flush_cycle;
+	int data_owner;
 }Bus, *Bus_ptr;
 
 typedef struct _tsram {
@@ -47,7 +46,7 @@ typedef struct _pipe {
 
 
 //execution of one core.
-int core_execution(int cycle, int pc, int core_id, unsigned int* imem, int* regs, 
+int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* regs, 
 	PIPE_ptr pipe, FILE* fp_trace, Bus_ptr last_bus, unsigned int dsram, TSRAM_ptr tsram[]);
 
 //function for the snoop between the cores.

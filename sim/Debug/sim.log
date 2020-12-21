@@ -1,18 +1,2 @@
-﻿  core.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(43,23): warning C4013: 'create_line_for_trace' undefined; assuming extern returning int
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(75,8): warning C4013: 'strcpy' undefined; assuming extern returning int
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(72,1): warning C4047: 'initializing': 'char *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(96,15): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
-  output.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(49,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(49,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(65,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(65,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(83,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(83,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(98,19): warning C4047: 'function': 'FILE **' differs in levels of indirection from 'FILE *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(98,10): warning C4024: 'fopen_s': different types for formal and actual parameter 1
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\output.c(116,7): warning C4101: 'inst_line': unreferenced local variable
-  Generating Code...
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(80): warning C4716: 'init_pipe': must return a value
+﻿  output.c
   sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe

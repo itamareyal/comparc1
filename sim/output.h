@@ -13,14 +13,12 @@ responsible on all the outputs of the program
 #include <stdlib.h>
 #include <string.h>
 #include "core.h"
+#include "HardCodedData.h"
 
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
-#define I_MEM_SIZE 1024
-#define BUFFER_MAX_SIZE 9
-#define MAX_PC_CHAR 10
-#define DSRAM_TSRAM_SIZE 256
+
 
 
 /*------------------------------------------------------------------------------------
@@ -29,14 +27,14 @@ responsible on all the outputs of the program
 //create all the output files that not have to update during the execution.
 void write_output_files(char **args,int *regs_0,int *regs_1,int *regs_2,int *regs_3, 
 	unsigned int *dsram_0, unsigned int *dsram_1, unsigned int*dsram_2, unsigned int *dsram_3, 
-	unsigned int *tsram_0, unsigned int *tsram_1, unsigned int *tsram_2, unsigned int* tsram_3
+	TSRAM_ptr tsram_0[], TSRAM_ptr tsram_1[], TSRAM_ptr tsram_2[], TSRAM_ptr tsram_3[]
 	, unsigned int *mem);
 
 //create the tsram and dsram output file.
 void create_dsram_output(unsigned int* dsram, char file_name[]);
 
 //create the tsram and dsram output file.
-void create_tsram_output(unsigned int* tsram, char file_name[]);
+void create_tsram_output(TSRAM_ptr tsram[], char file_name[]);
 
 //function to create the regout file
 void create_regout(int regs[], char file_name[]);

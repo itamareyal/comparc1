@@ -33,8 +33,8 @@ void manage_cores(int cycle, int pc, int core_id, int inst, unsigned int* imem, 
 }
 
 // core loop
-int core_execution(int* cycle,int* flush_cycle,int* data_owner, int pc, int core_id, unsigned int *imem, int *regs,
-	PIPE_ptr pipe, FILE* fp_trace,Bus_ptr last_bus, unsigned int dsram, TSRAM_ptr tsram[]) {
+int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *regs,
+	PIPE_ptr pipe, FILE* fp_trace, Bus_ptr last_bus, unsigned int dsram, TSRAM_ptr tsram[]) {
 	if (pc == -1)
 		return -1;
 	int inst = imem[pc];
@@ -44,8 +44,8 @@ int core_execution(int* cycle,int* flush_cycle,int* data_owner, int pc, int core
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf(fp_trace, "%s\n", line_for_trace);
 	regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
-	snoop_bus(last_bus, tsram);
-	check_flush(last_bus, tsram, imem);
+	//snoop_bus(last_bus, tsram);
+	//check_flush(last_bus, tsram, imem);
 	pc = execution(regs, pc, cmd, imem);
 	return pc;
 }
@@ -123,24 +123,24 @@ void execution_bus(Bus_ptr last_bus, TSRAM_ptr tsram) {
 
 // return the data requested by a core in read or readx
 void check_flush(Bus_ptr last_bus, TSRAM_ptr tsram, unsigned int mem[], int* bus_busy,int* cycle,int* flush_cycle) {
-	if (bus_busy == 1) {
+	if (*bus_busy == 1) {
 		if (flush_cycle == cycle)
 			;
 	}
-	int current_cycle;
 }
 
 //initilize the pipeline for the rest of the program
 PIPE_ptr init_pipe(int core_id) 
 {
-	char* stall = '---';
-	PIPE_ptr pipe=NULL;
-	pipe->core_id = core_id;
+	char stall[] = "---";
+	PIPE_ptr pipe= NULL;
 	strcpy(pipe->IF , stall);
 	strcpy(pipe->ID , stall);
 	strcpy(pipe->EX , stall);
 	strcpy(pipe->MEM , stall);
 	strcpy(pipe->WB , stall);
+	pipe->core_id = core_id;
+	return pipe;
 }
 
 void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIPE_ptr pipe_3)
@@ -166,6 +166,9 @@ Bus_ptr initilize_bus() {
 	Bus->bus_cmd = 0;
 	Bus->bus_data = 0;
 	Bus->bus_addr = 0;
+	Bus->data_owner = 0;
+	Bus->flush_cycle = -1;//intilize to these value because we do cycle==flush cycle from start.
+	return Bus;
 }
 
 int get_tag(int address) {

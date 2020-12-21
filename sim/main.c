@@ -9,12 +9,12 @@ main.c
 #include "input.h"
 #include "core.h"
 #include "output.h"
+#include "HardCodedData.h"
 
 
 /*------------------------------------------------------------------------------------
 										DEFINES
 ------------------------------------------------------------------------------------*/
-#define NUMBER_REGISTER_SIZE 16
 
 
 /*------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ main.c
 ------------------------------------------------------------------------------------*/
 int main(int argc, char* argv[]) {
 	// initialize main memory
-	unsigned int mem[MAIN_MEM_SIZE] = { 0 };
+	short mem[MAIN_MEM_SIZE] = { 0 };
 
 	// initiali registers for each core
 	int regs_0[NUMBER_REGISTER_SIZE] = { 0 };
@@ -52,10 +52,10 @@ int main(int argc, char* argv[]) {
 	unsigned int dsram_list[] = {dsram_0, dsram_1 , dsram_2, dsram_3 ,mem};
 
 	// initialize TSRAM for each core
-	TSRAM_ptr tsram_0[TSRAM_SIZE] = NULL; 
-	TSRAM_ptr tsram_1[TSRAM_SIZE] = NULL;
-	TSRAM_ptr tsram_2[TSRAM_SIZE] = NULL;
-	TSRAM_ptr tsram_3[TSRAM_SIZE]= NULL;
+	TSRAM_ptr tsram_0[TSRAM_SIZE]; 
+	TSRAM_ptr tsram_1[TSRAM_SIZE];
+	TSRAM_ptr tsram_2[TSRAM_SIZE];
+	TSRAM_ptr tsram_3[TSRAM_SIZE];
 
 	//initialize TSRAM list for handling the flush.
 	TSRAM_ptr tsram_list[] = {tsram_0, tsram_1 , tsram_2, tsram_3 ,tsram_3};
@@ -72,8 +72,6 @@ int main(int argc, char* argv[]) {
 
 	// initialize cycle counter and 4 pc for each of the 4 cores.
 	int* cycle=0; 
-	int* flush_cycle=-1; 
-	int* data_owner=0;
 	int pc_0 = 0;
 	int pc_1 = 0;
 	int pc_2 = 0;
@@ -108,8 +106,8 @@ int main(int argc, char* argv[]) {
 		pc_1 = core_execution(cycle, pc_1, 1, imem_1, regs_1, pipe_1, core_1_trace, last_bus, dsram_0, tsram_0,bus_busy);
 		pc_2 = core_execution(cycle, pc_2, 2, imem_2, regs_2, pipe_2, core_2_trace, last_bus, dsram_0, tsram_0, bus_busy);
 		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, pipe_3, core_3_trace, last_bus, dsram_0, tsram_0, bus_busy);
-		data_target();
-		check_flush(last_bus, dsram_list[last_bus->bus_origid], );
+	
+		//check_flush(last_bus, dsram_list[last_bus->bus_origid], );
 		cycle++;
 		// execute single bus transaction (if called)
 

@@ -25,7 +25,7 @@ output.c
 ------------------------------------------------------------------------------------*/
 void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int* regs_3,
 	unsigned int* dsram_0, unsigned int* dsram_1, unsigned int* dsram_2, unsigned int* dsram_3,
-	unsigned int* tsram_0, unsigned int* tsram_1, unsigned int* tsram_2, unsigned int* tsram_3
+	TSRAM_ptr tsram_0[], TSRAM_ptr tsram_1[], TSRAM_ptr tsram_2[], TSRAM_ptr tsram_3[]
 	, unsigned int* mem)
 {
 	create_memout(mem, args[6]);
@@ -46,13 +46,14 @@ void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int*
 
 void create_dsram_output(unsigned int* dsram, char file_name[]) {
 	FILE* fp_memout = NULL;
-	fopen_s(fp_memout, file_name, "w"); // open new file
+
+	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
 	{
 		printf("error opening file");
 		exit(1);
 	}
-	for (int i = 0; i < DSRAM_TSRAM_SIZE; i++) // print memory to file
+	for (int i = 0; i < DSRAM_SIZE; i++) // print memory to file
 	{
 		fprintf(fp_memout, "%08X\n", *dsram);
 		dsram++;
@@ -60,17 +61,17 @@ void create_dsram_output(unsigned int* dsram, char file_name[]) {
 	fclose(fp_memout); // close file
 }
 
-void create_tsram_output(unsigned int* tsram, char file_name[]) {
+void create_tsram_output(TSRAM_ptr tsram[], char file_name[]) {
 	FILE* fp_memout = NULL;
-	fopen_s(fp_memout, file_name, "w"); // open new file
+	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
 	{
 		printf("error opening file");
 		exit(1);
 	}
-	for (int i = 0; i < DSRAM_TSRAM_SIZE; i++) // print memory to file
+	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%04X\n", *tsram);
+		fprintf(fp_memout, "%04X\n", tsram[i]->msi+tsram[i]->tag);
 		tsram++;
 	}
 	fclose(fp_memout); // close file
@@ -80,7 +81,7 @@ void create_tsram_output(unsigned int* tsram, char file_name[]) {
 void create_regout(int regs[], char file_name[]) {
 	FILE* fp_regout=NULL;
 
-	fopen_s(fp_regout, file_name, "w"); // open new file
+	fopen_s(&fp_regout, file_name, "w"); // open new file
 	if (fp_regout == NULL) // handle error
 	{
 		printf("error opening file");
@@ -94,8 +95,8 @@ void create_regout(int regs[], char file_name[]) {
 }
 
 void create_memout(unsigned int* mem, char file_name[]) {
-	FILE* fp_memout=NULL;
-	fopen_s(fp_memout, file_name, "w"); // open new file
+	FILE* fp_memout = NULL;
+	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
 	{
 		printf("error opening file");
@@ -113,7 +114,7 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned i
 {
 	//initinlize parameters
 	int i;
-	char inst_line[BUFFER_MAX_SIZE];
+	//char inst_line[BUFFER_MAX_SIZE];
 	char cycle_char[MAX_PC_CHAR] = { 0 };
 	char temp_reg_char[BUFFER_MAX_SIZE] = { 0 };
 
