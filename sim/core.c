@@ -26,15 +26,12 @@ Hold functions to dispatch and manage cores in the program
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
 //run all the 4 cores parallel
-void manage_cores(int cycle, int pc, int core_id, int inst, unsigned int* imem, int* regs, FILE* fp_trace) {
+//void manage_cores(int cycle, int pc, int core_id, int inst, unsigned int* imem, int* regs, FILE* fp_trace) {
 	/*int pc_0, pc_1, pc_2, pc_3 = 0;
 	core_execution(pc_0,)*/
 
-}
-
-// core loop
 int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *regs,
-	PIPE_ptr pipe, FILE* fp_trace, Bus_ptr last_bus, unsigned int dsram, TSRAM_ptr tsram[]) {
+	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, unsigned int* dsram, TSRAM_ptr tsram[]) {
 	if (pc == -1)
 		return -1;
 	int inst = imem[pc];
@@ -50,8 +47,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	return pc;
 }
 
-// snoop function- update tsram
-void snoop_bus(Bus_ptr last_bus, TSRAM_ptr tsram[],int * bus_busy,int* flush_cycle, int* cycle) {
+void snoop_bus(BUS_ptr last_bus, TSRAM_ptr tsram[], int* cycle) {
 	int tag, index;
 	tag = get_tag(last_bus->bus_addr);
 	index = get_index(last_bus->bus_addr);
@@ -67,9 +63,9 @@ void snoop_bus(Bus_ptr last_bus, TSRAM_ptr tsram[],int * bus_busy,int* flush_cyc
 		else if (tsram[index]->msi == 1)
 			break;
 		else if (tsram[index]->msi == 2) {
-			if (bus_busy == 0) {
-				bus_busy = 1;
-				flush_cycle = cycle + 64;
+			if (last_bus->bus_busy == 0) {
+				last_bus->bus_busy = 1;
+				last_bus->flush_cycle = *cycle + 64;
 				tsram[index]->msi = 1;
 			}
 			break;
@@ -84,9 +80,9 @@ void snoop_bus(Bus_ptr last_bus, TSRAM_ptr tsram[],int * bus_busy,int* flush_cyc
 			break;
 		}
 		else if (tsram[index]->msi == 2) {
-			if (bus_busy == 0) {
-				bus_busy = 1;
-				flush_cycle = cycle + 64;
+			if (last_bus->bus_busy == 0) {
+				last_bus->bus_busy = 1;
+				last_bus->flush_cycle = cycle + 64;
 				tsram[index]->msi = 1;
 			}
 			break;
@@ -99,8 +95,7 @@ void snoop_bus(Bus_ptr last_bus, TSRAM_ptr tsram[],int * bus_busy,int* flush_cyc
 	}
 }
 
-// snoop function- update tsram
-void execution_bus(Bus_ptr last_bus, TSRAM_ptr tsram) {
+void execution_bus(BUS_ptr last_bus, TSRAM_ptr tsram) {
 	switch (last_bus->bus_cmd) {
 	case 0: // no cmd
 	{
@@ -121,34 +116,32 @@ void execution_bus(Bus_ptr last_bus, TSRAM_ptr tsram) {
 	}
 }
 
-// return the data requested by a core in read or readx
-void check_flush(Bus_ptr last_bus, TSRAM_ptr tsram, unsigned int mem[], int* bus_busy,int* cycle,int* flush_cycle) {
+void check_flush(BUS_ptr last_bus, TSRAM_ptr tsram, unsigned int mem[], int* bus_busy,int* cycle,int* flush_cycle) {
 	if (*bus_busy == 1) {
 		if (flush_cycle == cycle)
 			;
 	}
 }
 
-//initilize the pipeline for the rest of the program
-PIPE_ptr init_pipe(int core_id) 
+void init_pipe(int core_id, PIPE_ptr pipe) 
 {
-	char stall[] = "---";
-	PIPE_ptr pipe= NULL;
-	strcpy(pipe->IF , stall);
-	strcpy(pipe->ID , stall);
-	strcpy(pipe->EX , stall);
-	strcpy(pipe->MEM , stall);
-	strcpy(pipe->WB , stall);
+	/*pipe = malloc(sizeof(PIPE));
+	if (pipe == NULL)
+		exit(1);*/
+	pipe->IF = STALL;
+	pipe->ID = STALL;
+	pipe->EX = STALL;
+	pipe->MEM = STALL;
+	pipe->WB = STALL;
 	pipe->core_id = core_id;
-	return pipe;
 }
 
 void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIPE_ptr pipe_3)
 {
-	pipe_0 = init_pipe(0);
-	pipe_1 = init_pipe(1);
-	pipe_2 = init_pipe(2);
-	pipe_3 = init_pipe(3);
+	init_pipe(0,pipe_0);
+	init_pipe(1, pipe_1);
+	init_pipe(2, pipe_2);
+	init_pipe(3, pipe_3);
 }
 
 void update_pipeline(PIPE_ptr pipe, int pc)
@@ -160,8 +153,11 @@ void update_pipeline(PIPE_ptr pipe, int pc)
 	pipe->IF = pc;
 }
 
-Bus_ptr initilize_bus() {
-	Bus_ptr Bus = NULL;
+BUS_ptr initilize_bus() {
+	BUS_ptr Bus;
+	Bus = (BUS_ptr)malloc(sizeof(BUS));
+	if (Bus == NULL)
+		return NULL;
 	Bus->bus_origid = 0;
 	Bus->bus_cmd = 0;
 	Bus->bus_data = 0;

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\</FILEPATH>
+      <FILENAME>core.c</FILENAME>
+      <LINE>41</LINE>
+      <COLUMN>22</COLUMN>
+    </SFA>
+    <DEFECTCODE>28278</DEFECTCODE>
+    <DESCRIPTION>Function create_line_for_trace appears with no prototype in scope.  Only limited analysis can be performed. Include the appropriate header or add a prototype. This warning also occurs if parameter or return types are omitted in a function definition.</DESCRIPTION>
+    <FUNCTION>core_execution</FUNCTION>
+    <DECORATED>core_execution</DECORATED>
+    <FUNCLINE>33</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+</DEFECTS>

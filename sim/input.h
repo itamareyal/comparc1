@@ -10,6 +10,7 @@ input.h
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "HardCodedData.h"
 
 /*------------------------------------------------------------------------------------
 										DEFINES
@@ -23,7 +24,7 @@ input.h
 ------------------------------------------------------------------------------------*/
 char** check_args(int argc, char* argv[]);
 
-FILE* open_file(FILE* fp, char* address, char mode);
+FILE* open_file(FILE* file, char* file_name, char* file_open_type);
 
 // open imem & mem files and read them to arrays
 int open_mem_files(int argc, char* argv[], unsigned int imem_0[], unsigned int imem_1[], unsigned int imem_2[], unsigned int imem_3[], unsigned int mem[]);

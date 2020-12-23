@@ -20,6 +20,9 @@ HardCodedData.h
 #define TSRAM_SIZE 256
 #define MAIN_MEM_SIZE 1048576 // check for updates
 #define MAX_LINE_TRACE 150
+#define ERROR_HEAP -3
+#define ERROR_FILE -2
+#define STALL -10
 
 
 /*------------------------------------------------------------------------------------
