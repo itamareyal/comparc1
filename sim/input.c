@@ -47,12 +47,16 @@ char ** check_args(int argc, char* argv[]) {
 
 }
 
-FILE* open_file(FILE* fp, char* address, char mode) {
-	if (NULL == fopen_s(fp, address, mode)) {
-		printf("Error opening file %s\n", address);
-		exit(1);
+FILE* open_file(FILE* file, char* file_name, char* file_open_type) {
+	errno_t retval;
+	// Open file
+	retval = fopen_s(&file, file_name, file_open_type);
+	if (0 != retval)
+	{
+		printf("Failed to open file: %s\n", file_name);
+		return file;
 	}
-	return fp;
+	return file;
 }
 
 // open imem & mem files and read them to arrays
@@ -70,12 +74,12 @@ int open_mem_files(int argc, char* argv[], unsigned int imem_0[], unsigned int i
 
 
 int open_trace_files(char* args[], FILE *core_0_trace, FILE* core_1_trace, FILE* core_2_trace, FILE* core_3_trace, FILE* bus_trace) {
-	char mode = "w";
-	open_file(core_0_trace, args[11], mode);
-	open_file(core_1_trace, args[12], mode);
-	open_file(core_2_trace, args[13], mode);
-	open_file(core_3_trace, args[14], mode);
-	open_file(bus_trace, args[15], mode);
+	char* mode = "w";
+	core_0_trace=open_file(core_0_trace, args[11], mode);
+	core_1_trace=open_file(core_1_trace, args[12], mode);
+	core_2_trace=open_file(core_2_trace, args[13], mode);
+	core_3_trace=open_file(core_3_trace, args[14], mode);
+	bus_trace= open_file(bus_trace, args[15], mode);
 
 	return 0;
 }
@@ -91,10 +95,11 @@ void close_trace_files(FILE* core_0_trace, FILE* core_1_trace, FILE* core_2_trac
 
 int read_memin_imem(unsigned int* mem, char* address)
 {
-	FILE* fp = NULL;
-	char mode = "r";
-	open_file(fp, address, mode);
-
+	FILE* fp=NULL;
+	const char* mode = "r";
+	fp= open_file(fp, address, mode);
+	if (fp == NULL)
+		return ERROR_FILE;
 	// read memin file line by line and turn it into array
 	char line[SIZE_MEM_MAX_LINE];
 	int i = 0;

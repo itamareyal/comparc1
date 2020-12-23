@@ -117,30 +117,59 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned i
 	//char inst_line[BUFFER_MAX_SIZE];
 	char cycle_char[MAX_PC_CHAR] = { 0 };
 	char temp_reg_char[BUFFER_MAX_SIZE] = { 0 };
+	char* stall = "---";
 
 	//add cycle and fetch to the output line
-	sprintf_s(cycle_char, MAX_PC_CHAR, "%08X", cycle);
-	//sprintf_s(inst_line, BUFFER_MAX_SIZE, "%08X", pc);
+	sprintf_s(cycle_char, MAX_PC_CHAR, "%d", cycle);
 	sprintf_s(line_for_trace, BUFFER_MAX_SIZE, cycle_char); //add pc to line
 	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	//sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, inst_line); //add opcode to line
-	//sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+
 	//handle pipeline. add each value manuelly
-	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->IF);
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->ID);
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->EX);
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE,pipe->MEM);
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	strcpy_s(temp_reg_char, BUFFER_MAX_SIZE, pipe->WB);
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	if (pipe->IF == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->IF);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->ID == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->ID);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->EX == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->EX);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->MEM == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->MEM);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->WB == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->WB);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
 	
 	//add registers to line from R2 to R14
 	for (i = 1; i < 15; i++) { 
