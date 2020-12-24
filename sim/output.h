@@ -42,14 +42,12 @@ void create_regout(int regs[], char file_name[]);
 //function to create the memout file
 void create_memout(unsigned int* mem, char file_name[]);
 
-//responsible to open all trace files safety
-void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int inst, PIPE_ptr pipe);
+//A function that converts a negative number to positive in 2's compliment
+int neg_to_pos(signed int num);
 
 //responsible to close all the trace files
 void close_trace_files(FILE* core_0_trace, FILE* core_1_trace, FILE* core_2_trace, FILE* core_3_trace, FILE* bus_trace);
 
-//A function that converts a negative number to positive in 2's compliment
-int neg_to_pos(signed int num);
 
 
 

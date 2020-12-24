@@ -8,6 +8,7 @@ core.h
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "core.h"
 #include "instructions.h"
 #include "HardCodedData.h"
 
@@ -78,4 +79,7 @@ int get_tag(int address);
 
 //get the tag from the tag in memory
 int get_index(int address);
+
+//responsible to open all trace files safety
+void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int inst, PIPE_ptr pipe);
 

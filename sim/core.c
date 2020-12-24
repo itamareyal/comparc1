@@ -39,7 +39,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	update_pipeline(pipe, pc);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
-	fprintf(fp_trace, "%s\n", line_for_trace);
+	fprintf_s(fp_trace, "%s\n", line_for_trace);
 	regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
 	//snoop_bus(last_bus, tsram);
 	//check_flush(last_bus, tsram, imem);
@@ -179,6 +179,87 @@ int get_index(int address) {
 	return index;
 }
 	
+void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int cycle, PIPE_ptr pipe)
+{
+	//initinlize parameters
+	int i;
+	char cycle_char[MAX_PC_CHAR] = { 0 };
+	char temp_reg_char[BUFFER_MAX_SIZE] = { 0 };
+	char* stall = "---";
+
+	//add cycle and fetch to the output line
+	sprintf_s(cycle_char, MAX_PC_CHAR, "%d", cycle);
+	sprintf_s(line_for_trace, BUFFER_MAX_SIZE, cycle_char);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+
+	//handle pipeline. add each value manuelly
+	if (pipe->IF == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->IF);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->ID == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->ID);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->EX == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->EX);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->MEM == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->MEM);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	if (pipe->WB == STALL) {
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+	else {
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->WB);
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+
+	//add registers to line from R2 to R14
+	for (i = 1; i < 15; i++) {
+		int temp_reg = 0;
+		if (regs[i] < 0)
+			temp_reg = neg_to_pos(regs[i]);
+		else
+			temp_reg = regs[i];
+		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%08X", temp_reg);//change to hex
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
+		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
+	}
+
+	//add last register to line (without space at the end)
+	int temp_reg = 0;
+	if (regs[i] < 0)
+		temp_reg = neg_to_pos(regs[i]);
+	else
+		temp_reg = regs[i];
+	sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%.8X", temp_reg);
+	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);
+}
 
 
 // ask for bus function and execute

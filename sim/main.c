@@ -7,7 +7,6 @@ main.c
 										INCLUDE
 ------------------------------------------------------------------------------------*/
 #include "input.h"
-#include "core.h"
 #include "output.h"
 #include "HardCodedData.h"
 
@@ -47,26 +46,20 @@ unsigned int dsram_1[DSRAM_SIZE] = { 0 };
 unsigned int dsram_2[DSRAM_SIZE] = { 0 };
 unsigned int dsram_3[DSRAM_SIZE] = { 0 };
 
-// initialize trace file for each of the cores and also one bus trace
-static FILE* core_0_trace = NULL;
-static FILE* core_1_trace = NULL;
-FILE* core_2_trace = NULL;
-FILE* core_3_trace = NULL;
-FILE* bus_trace = NULL;
+
+//initialize DSRAM list for handling the flush.
+unsigned int* dsram_list[] = { dsram_0, dsram_1 , dsram_2, dsram_3 ,mem };
+
+// initialize TSRAM for each core
+TSRAM_ptr tsram_0[TSRAM_SIZE];
+TSRAM_ptr tsram_1[TSRAM_SIZE];
+TSRAM_ptr tsram_2[TSRAM_SIZE];
+TSRAM_ptr tsram_3[TSRAM_SIZE];
+
+//initialize TSRAM list for handling the flush.
+TSRAM_ptr* tsram_list[] = { tsram_0, tsram_1 , tsram_2, tsram_3 ,tsram_3 };
 
 int main(int argc, char* argv[]) {
-
-	//initialize DSRAM list for handling the flush.
-	unsigned int* dsram_list[] = {dsram_0, dsram_1 , dsram_2, dsram_3 ,mem};
-
-	// initialize TSRAM for each core
-	TSRAM_ptr tsram_0[TSRAM_SIZE]; 
-	TSRAM_ptr tsram_1[TSRAM_SIZE];
-	TSRAM_ptr tsram_2[TSRAM_SIZE];
-	TSRAM_ptr tsram_3[TSRAM_SIZE];
-
-	//initialize TSRAM list for handling the flush.
-	TSRAM_ptr *tsram_list[] = {tsram_0, tsram_1 , tsram_2, tsram_3 ,tsram_3};
 
 	BUS_ptr last_bus; // holds last trans on the bus for snooping at next iteration
 	int* bus_busy = 0; // 0-free for trans; 1-busy, wait for flush
@@ -84,6 +77,13 @@ int main(int argc, char* argv[]) {
 	PIPE pipe_2;
 	PIPE pipe_3;
 
+	// initialize trace file for each of the cores and also one bus trace
+	FILE* core_0_trace = NULL;
+	FILE* core_1_trace = NULL;
+	FILE* core_2_trace = NULL;
+	FILE* core_3_trace = NULL;
+	FILE* bus_trace = NULL;
+
 	// read mem & imem files to arrays
 	if (0 != open_mem_files(argc, argv, imem_0, imem_1, imem_2, imem_3, mem)){
 		printf("Error opening mem files.\n");
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// open live trace files for write
-	if (0 != open_trace_files(argv, core_0_trace, core_1_trace, core_2_trace, core_3_trace, bus_trace)) {
+	if (0 != open_trace_files(argv, &core_0_trace, &core_1_trace, &core_2_trace, &core_3_trace, &bus_trace)) {
 		printf("Error opening trace files.\n");
 		exit(1);
 	}
