@@ -1,2 +1,12 @@
-﻿  main.c
+﻿  core.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.h(70,25): warning C4091: 'typedef ': ignored on left of '_command' when no variable is declared
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(42,55): warning C4047: 'function': 'int' differs in levels of indirection from 'int *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(42,50): warning C4024: 'create_line_for_trace': different types for formal and actual parameter 4
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(61,58): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(74,58): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(123,40): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(142,43): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(160,116): warning C4029: declared formal parameter list different from definition
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(290,25): warning C4013: 'neg_to_pos' undefined; assuming extern returning int
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(317): warning C4716: 'initilize_STAT': must return a value
   sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe

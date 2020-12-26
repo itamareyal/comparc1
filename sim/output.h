@@ -12,6 +12,7 @@ responsible on all the outputs of the program
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "core.h"
 #include "HardCodedData.h"
 

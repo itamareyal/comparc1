@@ -71,7 +71,7 @@ void create_tsram_output(TSRAM_ptr tsram[], char file_name[]) {
 	}
 	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%04X\n", tsram[i]->msi+tsram[i]->tag);
+		fprintf(fp_memout, "%04X\n",tsram[i]->msi+tsram[i]->tag);
 		tsram++;
 	}
 	fclose(fp_memout); // close file
