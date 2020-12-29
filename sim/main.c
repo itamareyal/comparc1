@@ -52,13 +52,13 @@ unsigned int dsram_3[DSRAM_SIZE] = { 0 };
 unsigned int* dsram_list[] = { dsram_0, dsram_1 , dsram_2, dsram_3 ,mem };
 
 // initialize TSRAM for each core
-TSRAM_ptr tsram_0[TSRAM_SIZE];
-TSRAM_ptr tsram_1[TSRAM_SIZE];
-TSRAM_ptr tsram_2[TSRAM_SIZE];
-TSRAM_ptr tsram_3[TSRAM_SIZE];
+TSRAM tsram_0[TSRAM_SIZE];
+TSRAM tsram_1[TSRAM_SIZE];
+TSRAM tsram_2[TSRAM_SIZE];
+TSRAM tsram_3[TSRAM_SIZE];
 
 //initialize TSRAM list for handling the flush.
-TSRAM_ptr* tsram_list[] = { tsram_0, tsram_1 , tsram_2, tsram_3 ,tsram_3 };
+TSRAM* tsram_list[] = { tsram_0, tsram_1 , tsram_2, tsram_3 };
 
 int main(int argc, char* argv[]) {
 
@@ -77,6 +77,9 @@ int main(int argc, char* argv[]) {
 	PIPE pipe_1;
 	PIPE pipe_2;
 	PIPE pipe_3;
+
+	//initialize watch for all cores
+	Watch watch;
 
 	// initialize stats for each of the cores
 	STAT stat_0;
@@ -103,19 +106,32 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
+	initilize_watch(&watch);
+
 	initilize_pipelines(&pipe_0, &pipe_1, &pipe_2, &pipe_3);
 
 	initilize_all_stats(&stat_0, &stat_1, &stat_2, &stat_3);
+
+	//initilize all tsram
+	int i, j = 0;
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 256; j++) {
+			TSRAM unit_tsram = { 0,0 };
+			tsram_list[i][j] = unit_tsram;
+		}
+	}
+
+	//initilize_all_tsram(tsram_0, tsram_1, tsram_2, tsram_3);
 
 	last_bus= initilize_bus();
 
 	// multi core execution loop. exits when all cores are done. 
 	while (pc_0 != -1 || pc_1 != -1 || pc_2 != -1 || pc_3 != -1) {
 		// execute for each core
-		pc_0 = core_execution(cycle, pc_0, 0, imem_0, regs_0,&pipe_0, core_0_trace, last_bus,dsram_0,tsram_0, &stat_0);
-		pc_1 = core_execution(cycle, pc_1, 1, imem_1, regs_1, &pipe_1,core_1_trace, last_bus, dsram_1, tsram_1, &stat_1);
-		pc_2 = core_execution(cycle, pc_2, 2, imem_2, regs_2, &pipe_2, core_2_trace, last_bus, dsram_2, tsram_2, &stat_2);
-		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, &pipe_3, core_3_trace, last_bus, dsram_3, tsram_3, &stat_3);
+		pc_0 = core_execution(cycle, pc_0, 0, imem_0, regs_0,&pipe_0, core_0_trace, last_bus,dsram_0,&tsram_0, &stat_0, &watch);
+		pc_1 = core_execution(cycle, pc_1, 1, imem_1, regs_1, &pipe_1,core_1_trace, last_bus, dsram_1, &tsram_1, &stat_1, &watch);
+		pc_2 = core_execution(cycle, pc_2, 2, imem_2, regs_2, &pipe_2, core_2_trace, last_bus, dsram_2, &tsram_2, &stat_2, &watch);
+		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, &pipe_3, core_3_trace, last_bus, dsram_3, &tsram_3, &stat_3, &watch);
 	
 		execution_bus(last_bus, cycle, mem );
 		cycle+=1;
