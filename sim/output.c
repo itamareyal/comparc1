@@ -71,7 +71,7 @@ void create_tsram_output(TSRAM_ptr tsram[], char file_name[]) {
 	}
 	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%04X\n", tsram[i]->msi+tsram[i]->tag);
+		fprintf(fp_memout, "%04X\n",tsram[i]->msi+tsram[i]->tag);
 		tsram++;
 	}
 	fclose(fp_memout); // close file
@@ -108,89 +108,6 @@ void create_memout(unsigned int* mem, char file_name[]) {
 		mem++;
 	}
 	fclose(fp_memout); // close file
-}
-
-void create_line_for_trace(char line_for_trace[], int regs[], int pc, unsigned int cycle, PIPE_ptr pipe)
-{
-	//initinlize parameters
-	int i;
-	//char inst_line[BUFFER_MAX_SIZE];
-	char cycle_char[MAX_PC_CHAR] = { 0 };
-	char temp_reg_char[BUFFER_MAX_SIZE] = { 0 };
-	char* stall = "---";
-
-	//add cycle and fetch to the output line
-	sprintf_s(cycle_char, MAX_PC_CHAR, "%d", cycle);
-	sprintf_s(line_for_trace, BUFFER_MAX_SIZE, cycle_char); //add pc to line
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-
-	//handle pipeline. add each value manuelly
-	if (pipe->IF == STALL) {
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	else {
-		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->IF);
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	if (pipe->ID == STALL) {
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	else {
-		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->ID);
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	if (pipe->EX == STALL) {
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	else {
-		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->EX);
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	if (pipe->MEM == STALL) {
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	else {
-		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->MEM);
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	if (pipe->WB == STALL) {
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, stall);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	else {
-		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%d", pipe->WB);
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-	
-	//add registers to line from R2 to R14
-	for (i = 1; i < 15; i++) { 
-		int temp_reg = 0;
-		if (regs[i] < 0)
-			temp_reg = neg_to_pos(regs[i]);
-		else
-			temp_reg = regs[i];
-		sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%08X", temp_reg);//change to hex
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);//add to line
-		sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, " ");
-	}
-
-	//add last register to line (without space at the end)
-	int temp_reg = 0;
-	if (regs[i] < 0)
-		temp_reg = neg_to_pos(regs[i]);
-	else
-		temp_reg = regs[i];
-	sprintf_s(temp_reg_char, BUFFER_MAX_SIZE, "%.8X", temp_reg);
-	sprintf_s(line_for_trace + strlen(line_for_trace), BUFFER_MAX_SIZE, temp_reg_char);
 }
 
 //A function that converts a negative number to positive in 2's compliment
