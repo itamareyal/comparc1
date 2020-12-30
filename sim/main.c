@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 	// write memout, regout x4, dsram x4, tsram x4, stats x4
 	write_output_files(argv, regs_0, regs_1, regs_2, regs_3,
 		dsram_0, dsram_1, dsram_2, dsram_3,
-		tsram_0, tsram_1, tsram_2, tsram_3
+		&tsram_0, &tsram_1, &tsram_2, &tsram_3
 		,mem);
 
 	//close all files

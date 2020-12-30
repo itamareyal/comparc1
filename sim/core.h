@@ -150,5 +150,5 @@ int bge(int* regs, Command cmd, int pc);
 int jal(int* regs, Command cmd, int pc);
 void lw(int* regs, Command cmd, unsigned int* dsram);
 void sw(int* regs, Command cmd, unsigned int* dsram, TSRAM tsram[]);
-void ll(int* regs, Command cmd, unsigned int* dsram, Watch_ptr watch);
+void ll(int* regs, Command cmd, unsigned int* dsram, Watch_ptr watch, int core_id);
 void sc(int* regs, Command cmd, unsigned int* dsram, Watch_ptr watch);

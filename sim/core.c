@@ -29,17 +29,48 @@ Hold functions to dispatch and manage cores in the program
 int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *regs,
 	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, unsigned int* dsram,
 	TSRAM tsram[],STAT_ptr stat, Watch_ptr watch) {
+	//if we are in halt dont come in the function at all
 	if (pc == -1)
 		return -1;
-	int inst = imem[pc];
-	Command cmd = line_to_command(inst, core_id); // create Command struct
+
+	int inst;
+	Command cmd;
+	//fetch only if we are not in stall
+	if (pc >= -2) {
+		inst = imem[pc];
+		cmd = line_to_command(inst, core_id); // create Command struct
+	}
 	update_pipeline(pipe, pc);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf_s(fp_trace, "%s\n", line_for_trace);
-	regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
 	snoop_bus(last_bus, tsram,cycle,core_id, dsram);
-	pc = execution(regs, pc, cmd, imem, last_bus, dsram, tsram, stat,pipe,cycle, watch);
+
+	//write back
+	inst = imem[pipe->WB];
+	cmd = line_to_command(inst, core_id);
+	if (pipe->WB == -10)//if we are in stall
+		return ++pc;
+	else if (cmd.opcode > 15 || cmd.opcode < 9) {//cant execute the jump opcode again
+		regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
+		pc = execution(regs, pc, cmd, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+	}
+	else//case jump order not taken and got to write back stage we need to do ++pc anyway
+		return ++pc;
+
+	//decode
+	inst = imem[pipe->ID];
+	cmd = line_to_command(inst, core_id);
+	regs[1] = sign_extend(cmd.immiediate);
+	if (cmd.opcode == 20) {//we handle halt in decode stage
+		pipe->IF = -10;
+		pc = -10;
+		return pc;
+	}
+	if (cmd.opcode <= 15 && cmd.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
+		pc = execution(regs, pc, cmd, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+		return pc;
+	}
 	return pc;
 }
 
@@ -156,9 +187,6 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 
 void init_pipe(int core_id, PIPE_ptr pipe) 
 {
-	/*pipe = malloc(sizeof(PIPE));
-	if (pipe == NULL)
-		exit(1);*/
 	pipe->IF = STALL;
 	pipe->ID = STALL;
 	pipe->EX = STALL;
@@ -274,7 +302,7 @@ void create_line_for_trace(char line_for_trace[], int regs[], int pc, int cycle,
 	}
 
 	//add registers to line from R2 to R14
-	for (i = 1; i < 15; i++) {
+	for (i = 2; i < 15; i++) {
 		int temp_reg = 0;
 		if (regs[i] < 0)
 			temp_reg = neg_to_pos(regs[i]);
@@ -594,7 +622,7 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 	}
 	case 18: //ll opcode
 	{
-		ll(regs, cmd, dsram,watch);
+		ll(regs, cmd, dsram,watch,pipe->core_id);
 		regs[0] = 0;
 		pc++;
 		break;
@@ -700,7 +728,7 @@ int blt(int* regs, Command cmd, int pc)
 	if (regs[cmd.rs] < regs[cmd.rt])
 		return pc = regs[cmd.rd];
 	else {
-		pc++;
+		//pc++;
 		return pc;
 	}
 }
@@ -763,12 +791,12 @@ void sw(int* regs, Command cmd, unsigned int* dsram, TSRAM tsram[])
 }
 
 //ll command.
-void ll(int* regs, Command cmd, unsigned int* dsram,Watch_ptr watch)
+void ll(int* regs, Command cmd, unsigned int* dsram,Watch_ptr watch, int core_id)
 {
 	if (get_index(regs[cmd.rs] + regs[cmd.rt]) < DSRAM_SIZE) {
 		regs[cmd.rd] = dsram[get_index(regs[cmd.rs] + regs[cmd.rt])];
-		watch->lock[ = 1;
-		watch->address = regs[cmd.rs] + regs[cmd.rt];
+		watch->lock[core_id] = 1;
+		watch->address[core_id] = regs[cmd.rs] + regs[cmd.rt];
 	}
 }
 
