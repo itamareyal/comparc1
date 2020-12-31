@@ -134,6 +134,11 @@ int main(int argc, char* argv[]) {
 		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, &pipe_3, core_3_trace, last_bus, dsram_3, &tsram_3, &stat_3, &watch);
 	
 		execution_bus(last_bus, cycle, mem );
+		if (last_bus->bus_cmd != 0) {
+			char line_for_bus[MAX_LINE_TRACE] = { 0 }; //create line for bus trace file
+			create_line_for_bus(line_for_bus, cycle, last_bus);
+			fprintf_s(bus_trace, "%s\n", line_for_bus);
+		}
 		cycle+=1;
 		// execute single bus transaction (if called)
 

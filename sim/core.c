@@ -74,6 +74,10 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	return pc;
 }
 
+void data_hazard(PIPE pipe) {
+
+}
+
 void snoop_bus(BUS_ptr last_bus, TSRAM tsram[], int* cycle, int core_id, unsigned int* dsram) {
 	int tag, index;
 	tag = get_tag(last_bus->bus_addr);
@@ -349,6 +353,33 @@ void initilize_watch(Watch_ptr watch) {
 	}
 }
 
+void create_line_for_bus(char line_for_bus[], int cycle, BUS_ptr last_bus) {
+	int i;
+	char cycle_char[MAX_PC_CHAR] = { 0 };
+	char temp_char[MAX_PC_CHAR] = { 0 };
+
+	//add cycle and fetch to the output line
+	sprintf_s(cycle_char, MAX_PC_CHAR, "%d", cycle / 4);
+	sprintf_s(line_for_bus, BUFFER_MAX_SIZE, cycle_char);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	//handle all the bus parameters
+	sprintf_s(temp_char, MAX_PC_CHAR, "%01X", last_bus->bus_origid);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	sprintf_s(temp_char, MAX_PC_CHAR, "%01X", last_bus->bus_cmd);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	sprintf_s(temp_char, MAX_PC_CHAR, "%05X", last_bus->bus_addr);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	sprintf_s(temp_char, MAX_PC_CHAR, "%.8X", last_bus->bus_data);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+}
+
 //this function sign extend the value of imm
 int sign_extend(int imm)
 {
@@ -366,17 +397,6 @@ unsigned int get_byte(unsigned int num, int pos)
 	unsigned int mask = 0xf << (pos * 4);
 	return ((num & mask) >> (pos * 4));
 }
-// put stall when the comaand is not valid
-Command put_stall(Command cmd, int core_id)
-{
-	cmd.opcode = 0;
-	cmd.rd = 0;
-	cmd.rs = 0;
-	cmd.rt = 0;
-	cmd.immiediate = 1;
-	cmd.core_id = core_id;
-	return cmd;
-}
 
 // this function creates a struct Command from a string in memory
 Command line_to_command(unsigned int inst, int core_id)
@@ -388,24 +408,6 @@ Command line_to_command(unsigned int inst, int core_id)
 	cmd.rt = get_byte(inst, 3);
 	cmd.immiediate = (get_byte(inst, 2) * 16 * 16) + (get_byte(inst, 1) * 16) + get_byte(inst, 0);
 	cmd.core_id = core_id;
-	//handle all out of bounds future problems
-	if (cmd.opcode < 9 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
-	{
-		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15 || cmd.rd == 1)
-			cmd = put_stall(cmd, core_id);
-	}
-	if (cmd.opcode > 8 && cmd.opcode < 15)//if opcode branch we need to check few expations
-	{
-		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
-			cmd = put_stall(cmd, core_id);
-	}
-	if (cmd.opcode == 15)// jal; check only cmd.rd
-	{
-		if (cmd.rd > 15)
-			cmd = put_stall(cmd, core_id);
-	}
-	if (cmd.opcode > 20) //how to handle error opcode that not exist
-		cmd = put_stall(cmd, core_id);
 
 	return cmd;
 }

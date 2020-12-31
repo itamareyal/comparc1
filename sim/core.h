@@ -78,6 +78,9 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* reg
 	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, unsigned int* dsram,
 	TSRAM tsram[], STAT_ptr stat, Watch_ptr watch);
 
+//function to check if there is data hazard
+void data_hazard(PIPE pipe);
+
 //function for the snoop between the cores.
 void snoop_bus(BUS_ptr last_bus, TSRAM tsram[], int* cycle, int core_id, unsigned int* dsram);
 
@@ -114,14 +117,14 @@ void  initilize_all_stats(STAT_ptr stat_0, STAT_ptr stat_1, STAT_ptr stat_2, STA
 //initialize watch for all cores
 void initilize_watch(Watch_ptr watch);
 
+//create one line for the trace of the bus
+void create_line_for_bus(char line_for_bus[], int cycle, BUS_ptr last_bus);
+
 //responsible on the sign extention of the immidiate
 int sign_extend(int imm);
 
 //get us one byte from 32 bit.
 unsigned int get_byte(unsigned int num, int pos);
-
-//put us stall in the pipeline
-Command put_stall(Command cmd, int core_id);
 
 //get line in assembler and convert it to type command
 Command line_to_command(unsigned int inst, int core_id);
