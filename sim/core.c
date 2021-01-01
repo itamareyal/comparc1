@@ -34,11 +34,11 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		return -1;
 
 	int inst;
-	Command cmd;
+	Command cmd_if, cmd_id, cmd_exe, cmd_mem, cmd_wb;
 	//fetch only if we are not in stall
 	if (pc >= -2) {
 		inst = imem[pc];
-		cmd = line_to_command(inst, core_id); // create Command struct
+		cmd_if = line_to_command(inst, core_id); // create Command struct
 	}
 	update_pipeline(pipe, pc);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
@@ -48,30 +48,86 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 
 	//write back
 	inst = imem[pipe->WB];
-	cmd = line_to_command(inst, core_id);
-	if (pipe->WB == -10)//if we are in stall
+	cmd_wb = line_to_command(inst, core_id);
+	if (pipe->WB < -1)//if we are in stall
 		return ++pc;
-	else if (cmd.opcode > 15 || cmd.opcode < 9) {//cant execute the jump opcode again
-		regs[1] = sign_extend(cmd.immiediate);//first we do sign extend to immiediate
-		pc = execution(regs, pc, cmd, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+	else if (cmd_wb.opcode > 15 || cmd_wb.opcode < 9) {//cant execute the jump opcode again
+		regs[1] = sign_extend(cmd_wb.immiediate);//first we do sign extend to immiediate
+		pc = execution(regs, pc, cmd_wb, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+		if (pc == -1)
+			return -1;
 	}
 	else//case jump order not taken and got to write back stage we need to do ++pc anyway
 		return ++pc;
 
-	//decode
+	//decode to see errors
 	inst = imem[pipe->ID];
-	cmd = line_to_command(inst, core_id);
-	regs[1] = sign_extend(cmd.immiediate);
-	if (cmd.opcode == 20) {//we handle halt in decode stage
+	cmd_id = line_to_command(inst, core_id);
+	regs[1] = sign_extend(cmd_id.immiediate);
+	inst = imem[pipe->EX];
+	cmd_exe = line_to_command(inst, core_id);
+	inst = imem[pipe->MEM];
+	cmd_mem = line_to_command(inst, core_id);
+	inst = imem[pipe->WB];
+	cmd_wb = line_to_command(inst, core_id);
+	if (data_hazard(cmd_id, cmd_exe, cmd_mem, cmd_wb)) {//detect data hazrds
+		pipe->WB = pipe->MEM;
+		pipe->MEM = pipe->EX;
+		pipe->EX = -10;
+		return pc;
+	}
+	if (cmd_id.opcode == 20 || cmd_exe.opcode == 20 || cmd_mem.opcode == 20) {//we handle halt in decode stage
 		pipe->IF = -10;
 		pc = -10;
 		return pc;
 	}
-	if (cmd.opcode <= 15 && cmd.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
-		pc = execution(regs, pc, cmd, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+
+	//execution of decode
+	if (cmd_id.opcode <= 15 && cmd_id.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
+		pc = execution(regs, pc, cmd_id, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
 		return pc;
 	}
 	return pc;
+}
+
+int data_hazard(Command id, Command exe, Command mem, Command wb) {
+	if (exe.opcode < 9 || exe.opcode==16 || exe.opcode==18) // arithmetic cmd saving new data to rd
+	{
+		if (exe.rd == id.rt || exe.rd == id.rs)
+			return 1;
+	}
+	
+	if (mem.opcode < 9 || mem.opcode == 16 || mem.opcode == 18) // arithmetic cmd saving new data to rd
+	{
+		if (mem.rd == id.rt || mem.rd == id.rs)
+			return 1;
+	}
+
+	if (wb.opcode < 9 || wb.opcode == 16 || wb.opcode == 18) // arithmetic cmd saving new data to rd
+	{
+		if (wb.rd == id.rt || wb.rd == id.rs)
+			return 1;
+	}
+	return 0;
+}
+
+int compare_bus(BUS_ptr prev_bus, BUS_ptr curr_bus) {
+	if (prev_bus->bus_origid != curr_bus->bus_origid)
+		return 0;
+	if (prev_bus->bus_cmd != curr_bus->bus_cmd)
+		return 0;
+	if (prev_bus->bus_addr != curr_bus->bus_addr)
+		return 0;
+	if (prev_bus->bus_data != curr_bus->bus_data)
+		return 0;
+	return 1;
+}
+
+void copy_bus(BUS_ptr prev_bus, BUS_ptr curr_bus) {
+	prev_bus->bus_origid = curr_bus->bus_origid;
+	prev_bus->bus_cmd = curr_bus->bus_cmd;
+	prev_bus->bus_addr = curr_bus->bus_addr;
+	prev_bus->bus_data = curr_bus->bus_data;
 }
 
 void snoop_bus(BUS_ptr last_bus, TSRAM tsram[], int* cycle, int core_id, unsigned int* dsram) {
@@ -205,6 +261,8 @@ void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIP
 
 void update_pipeline(PIPE_ptr pipe, int pc)
 {
+	if (pc == pipe->IF && pc>=0)
+		return;
 	pipe->WB = pipe->MEM;
 	pipe->MEM = pipe->EX;
 	pipe->EX = pipe->ID;
@@ -349,6 +407,33 @@ void initilize_watch(Watch_ptr watch) {
 	}
 }
 
+void create_line_for_bus(char line_for_bus[], int cycle, BUS_ptr last_bus) {
+	int i;
+	char cycle_char[MAX_PC_CHAR] = { 0 };
+	char temp_char[MAX_PC_CHAR] = { 0 };
+
+	//add cycle and fetch to the output line
+	sprintf_s(cycle_char, MAX_PC_CHAR, "%d", cycle / 4);
+	sprintf_s(line_for_bus, BUFFER_MAX_SIZE, cycle_char);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	//handle all the bus parameters
+	sprintf_s(temp_char, MAX_PC_CHAR, "%01X", last_bus->bus_origid);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	sprintf_s(temp_char, MAX_PC_CHAR, "%01X", last_bus->bus_cmd);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	sprintf_s(temp_char, MAX_PC_CHAR, "%05X", last_bus->bus_addr);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, " ");
+
+	sprintf_s(temp_char, MAX_PC_CHAR, "%.8X", last_bus->bus_data);
+	sprintf_s(line_for_bus + strlen(line_for_bus), BUFFER_MAX_SIZE, temp_char);//add to line
+}
+
 //this function sign extend the value of imm
 int sign_extend(int imm)
 {
@@ -366,17 +451,6 @@ unsigned int get_byte(unsigned int num, int pos)
 	unsigned int mask = 0xf << (pos * 4);
 	return ((num & mask) >> (pos * 4));
 }
-// put stall when the comaand is not valid
-Command put_stall(Command cmd, int core_id)
-{
-	cmd.opcode = 0;
-	cmd.rd = 0;
-	cmd.rs = 0;
-	cmd.rt = 0;
-	cmd.immiediate = 1;
-	cmd.core_id = core_id;
-	return cmd;
-}
 
 // this function creates a struct Command from a string in memory
 Command line_to_command(unsigned int inst, int core_id)
@@ -388,24 +462,6 @@ Command line_to_command(unsigned int inst, int core_id)
 	cmd.rt = get_byte(inst, 3);
 	cmd.immiediate = (get_byte(inst, 2) * 16 * 16) + (get_byte(inst, 1) * 16) + get_byte(inst, 0);
 	cmd.core_id = core_id;
-	//handle all out of bounds future problems
-	if (cmd.opcode < 9 || cmd.opcode == 14 || cmd.opcode == 17)//if opcode arithmetic we need to check few expations
-	{
-		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15 || cmd.rd == 1)
-			cmd = put_stall(cmd, core_id);
-	}
-	if (cmd.opcode > 8 && cmd.opcode < 15)//if opcode branch we need to check few expations
-	{
-		if (cmd.rd > 15 || cmd.rt > 15 || cmd.rs > 15)
-			cmd = put_stall(cmd, core_id);
-	}
-	if (cmd.opcode == 15)// jal; check only cmd.rd
-	{
-		if (cmd.rd > 15)
-			cmd = put_stall(cmd, core_id);
-	}
-	if (cmd.opcode > 20) //how to handle error opcode that not exist
-		cmd = put_stall(cmd, core_id);
 
 	return cmd;
 }
@@ -534,9 +590,9 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 		//invalid data (cache miss)
 		if (tsram[index].msi == 0) {
 			stat->read_miss += 1;
-			if (last_bus->bus_busy == 1) {
-				
-				//put_stall() need to remember to count the stalls.
+			if (last_bus->bus_busy == 1) {//put stall
+				stat->mem_stall += 1;
+				pipe->WB = -10;
 				return pc;
 			}
 			else{
@@ -561,9 +617,9 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 		else{
 			if (tsram[index].msi == 2) {//if the data in cache is modified we need to flush it to main memory
 				if (last_bus->bus_busy == 1) {
-					//put stall
-					pc++;
-					break;
+					stat->mem_stall += 1;
+					pipe->WB = -10;
+					return pc;
 				}
 				else {
 					last_bus->bus_origid = pipe->core_id;
@@ -582,8 +638,8 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 		if (tsram[index].msi == 2 && tsram[index].tag != tag) {//modified need to  flush data to main memory
 			stat->write_miss += 1;
 			if (last_bus->bus_busy == 1) {
-
-				//put_stall() need to remember to count the stalls.
+				stat->mem_stall += 1;
+				pipe->WB = -10;
 				return pc;
 			}
 			else {
@@ -606,7 +662,8 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 		}
 		else {//shared or invalid modes we have to do busrdx
 			if (last_bus->bus_busy == 1) {
-				//put stall
+				stat->mem_stall += 1;
+				pipe->WB = -10;
 				return pc;
 			}
 			else {
