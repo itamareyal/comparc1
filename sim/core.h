@@ -79,7 +79,13 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* reg
 	TSRAM tsram[], STAT_ptr stat, Watch_ptr watch);
 
 //function to check if there is data hazard
-void data_hazard(PIPE pipe);
+int data_hazard(Command id, Command exe, Command mem, Command wb);
+
+//comapre 2 buses
+int compare_bus(BUS_ptr prev_bus, BUS_ptr curr_bus);
+
+//copy the important values for the bus trace
+void copy_bus(BUS_ptr prev_bus, BUS_ptr curr_bus);
 
 //function for the snoop between the cores.
 void snoop_bus(BUS_ptr last_bus, TSRAM tsram[], int* cycle, int core_id, unsigned int* dsram);
