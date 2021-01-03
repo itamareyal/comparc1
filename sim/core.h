@@ -81,6 +81,9 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* reg
 //function to check if there is data hazard
 int data_hazard(Command id, Command exe, Command mem, Command wb);
 
+//responsible on compare betweem 2 commands and check the hazards if exists.
+int hazard_from_command(Command id, Command older);
+
 //comapre 2 buses
 int compare_bus(BUS_ptr prev_bus, BUS_ptr curr_bus);
 

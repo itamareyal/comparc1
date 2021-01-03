@@ -59,19 +59,27 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	inst = imem[pipe->WB];
 	cmd_wb = line_to_command(inst, core_id);
 	if (data_hazard(cmd_id, cmd_exe, cmd_mem, cmd_wb)) {//detect data hazrds
-		pipe->WB = pipe->MEM;
-		pipe->MEM = pipe->EX;
-		pipe->EX = -10;
-		increment_pc = 0;
+		if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
+			increment_pc = 0;
+		}
+		else if (cmd_mem.opcode > 15 || cmd_mem.opcode < 20)//data hazard when try to access memory
+		{
+		}
+		else {
+			pipe->WB = pipe->MEM;
+			pipe->MEM = pipe->EX;
+			pipe->EX = -10;
+			increment_pc = 0;
+		}
 	}
+	//branch resolution of decode
+	else if (cmd_id.opcode <= 15 && cmd_id.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
+		branch_resolution = execution(regs, pc, cmd_id, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+	}
+
 	if (cmd_id.opcode == 20 || cmd_exe.opcode == 20 || cmd_mem.opcode == 20|| cmd_wb.opcode==20) {//we handle halt in decode stage
 		pipe->IF = -10;
 		branch_resolution = -10;
-	}
-
-	//branch resolution of decode
-	if (cmd_id.opcode <= 15 && cmd_id.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
-		branch_resolution = execution(regs, pc, cmd_id, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
 	}
 
 	//memory
@@ -188,22 +196,25 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 
 int data_hazard(Command id, Command exe, Command mem, Command wb) {
 	//1 for data hazard and 0 for clear
-	if ((exe.opcode>-1 &&exe.opcode < 9) || exe.opcode==16 || exe.opcode==18) // arithmetic cmd saving new data to rd
-	{
-		if (exe.rd == id.rt || exe.rd == id.rs)
-			return 1;
-	}
-	
-	if ((mem.opcode > -1 && mem.opcode < 9) || mem.opcode == 16 || mem.opcode == 18) // arithmetic cmd saving new data to rd
-	{
-		if (mem.rd == id.rt || mem.rd == id.rs)
-			return 1;
-	}
 
-	if ((wb.opcode > -1 && wb.opcode < 9) || wb.opcode == 16 || wb.opcode == 18) // arithmetic cmd saving new data to rd
+	if (hazard_from_command(id, exe) + hazard_from_command(id, mem) + hazard_from_command(id, wb) != 0)
+		return 1;
+	return 0;
+}
+
+int hazard_from_command(Command id, Command older) {
+	if (older.opcode == 0 && older.rd == 0 && older.rs == 0 && older.rt==0) {//check if the older is stall
+		return 0;
+	}
+	if ((older.opcode > -1 && older.opcode < 9) || older.opcode == 16 || older.opcode == 18) // arithmetic cmd saving new data to rd
 	{
-		if (wb.rd == id.rt || wb.rd == id.rs)
+		if (older.rd == id.rt || older.rd == id.rs)
 			return 1;
+	}
+	else if (id.opcode >= 9 && id.opcode <= 15) {
+		if (older.rd == id.rt || older.rd == id.rs || older.rd==id.rd)
+			//if(older.rd!=0)//not $zero
+				return 1;
 	}
 	return 0;
 }
