@@ -29,7 +29,8 @@ Hold functions to dispatch and manage cores in the program
 int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *regs,
 	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, unsigned int* dsram,
 	TSRAM tsram[],STAT_ptr stat, Watch_ptr watch) {
-	//if we are in halt dont come in the function at all
+	//if we are in halt dont come in the function at all execpt snoop all the time include in halt
+	snoop_bus(last_bus, tsram, cycle, core_id, dsram);
 	if (pc == -1)
 		return -1;
 	
@@ -48,7 +49,6 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf_s(fp_trace, "%s\n", line_for_trace);
-	snoop_bus(last_bus, tsram,cycle,core_id, dsram);
 
 	//decode to see errors
 	inst = imem[pipe->ID];
@@ -64,7 +64,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
 			increment_pc = 0;
 		}
-		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20&& last_bus->bus_cmd!=3)//data hazard when try to access memory
+		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20 && last_bus->bus_cmd!=3)//data hazard when try to access memory
 		{
 		}
 		else {
@@ -178,6 +178,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 				last_bus->data_destination = pipe->core_id;
 				last_bus->flush_cycle = cycle + 64;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+				last_bus->bus_data = 0;
 			}
 			increment_pc = 0;
 		}
@@ -260,7 +261,7 @@ void snoop_bus(BUS_ptr last_bus, TSRAM tsram[], int* cycle, int core_id, unsigne
 			break;
 		else if (tsram[index].msi == 1)
 			break;
-		else if (tsram[index].msi == 2) {
+		else if (tsram[index].msi == 2) {//need to flush every one?
 			last_bus->bus_data = dsram[get_index(last_bus->bus_addr)];
 			last_bus->data_owner = core_id;
 			tsram[index].msi = 1;
@@ -379,10 +380,15 @@ void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIP
 
 void update_pipeline(PIPE_ptr pipe, int pc,STAT_ptr stat)
 {
+	//gone have order to execute
 	if (pipe->MEM != -10)
 		stat->instructions += 1;
+
+	//we are in stall but not hult
 	if (pc == pipe->IF && pc>=0)
 		return;
+
+	//update pipeline
 	pipe->WB = pipe->MEM;
 	pipe->MEM = pipe->EX;
 	pipe->EX = pipe->ID;

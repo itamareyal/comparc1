@@ -139,6 +139,7 @@ int main(int argc, char* argv[]) {
 			fprintf_s(bus_trace, "%s\n", line_for_bus);
 		}
 		copy_bus(prev_bus, last_bus);
+		printf("%d",last_bus->bus_busy);
 		cycle+=1;
 		// execute single bus transaction (if called)
 
