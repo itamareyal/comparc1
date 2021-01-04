@@ -62,7 +62,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
 			increment_pc = 0;
 		}
-		else if (cmd_mem.opcode > 15 || cmd_mem.opcode < 20)//data hazard when try to access memory
+		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20&& last_bus->bus_cmd!=3)//data hazard when try to access memory
 		{
 		}
 		else {
@@ -175,8 +175,8 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 				last_bus->flush_cycle = cycle + 64;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
 			}
+			increment_pc = 0;
 		}
-		increment_pc = 0;
 	}
 	
 	//write back
@@ -211,9 +211,8 @@ int hazard_from_command(Command id, Command older) {
 		if (older.rd == id.rt || older.rd == id.rs)
 			return 1;
 	}
-	else if (id.opcode >= 9 && id.opcode <= 15) {
+	else if (id.opcode >= 9 && id.opcode <= 15 ||id.opcode==17|| id.opcode==19) {//jump or sw opcode
 		if (older.rd == id.rt || older.rd == id.rs || older.rd==id.rd)
-			//if(older.rd!=0)//not $zero
 				return 1;
 	}
 	return 0;
@@ -319,6 +318,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->flush_cycle = -1;
 				last_bus->bus_data = mem[last_bus->bus_addr];
 			}
+			break;
 		}
 		case 2: // BusRdX
 		{
@@ -338,12 +338,14 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->flush_cycle = -1;
 				last_bus->bus_data = mem[last_bus->bus_addr];
 			}
+			break;
 		}
 		case 3: // Flush
 		{
 			mem[last_bus->bus_addr] = last_bus->bus_data;
 			// Flush had happened, reset bus to idle
 			last_bus = initilize_bus();
+			break;
 		}
 		}
 	}
