@@ -26,7 +26,7 @@ output.c
 void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int* regs_3,
 	unsigned int* dsram_0, unsigned int* dsram_1, unsigned int* dsram_2, unsigned int* dsram_3,
 	TSRAM tsram_0[], TSRAM tsram_1[], TSRAM tsram_2[], TSRAM tsram_3[]
-	, unsigned int* mem)
+	, unsigned int* mem,STAT stat_0, STAT stat_1, STAT stat_2, STAT stat_3)
 {
 	create_memout(mem, args[6]);
 	create_regout(regs_0, args[7]);
@@ -41,7 +41,34 @@ void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int*
 	create_tsram_output(tsram_1, args[21]);
 	create_tsram_output(tsram_2, args[22]);
 	create_tsram_output(tsram_3, args[23]);
-	//still remain to build a function for the stats
+	create_stat_output(stat_0, args[24]);
+	create_stat_output(stat_1, args[25]);
+	create_stat_output(stat_2, args[26]);
+	create_stat_output(stat_3, args[27]);
+}
+
+void create_stat_output(STAT stat, char file_name[]) {
+	
+	//initinlize parameters
+	FILE* fp_statout = NULL;
+
+	fopen_s(&fp_statout, file_name, "w"); // open new file
+	if (fp_statout == NULL) // handle error
+	{
+		printf("error opening file");
+		exit(1);
+	}
+
+	fprintf(fp_statout, "cycles %d\n", stat.cycles);
+	fprintf(fp_statout, "instructions %d\n", stat.instructions);
+	fprintf(fp_statout, "read_hit %d\n", stat.read_hit);
+	fprintf(fp_statout, "write_hit %d\n", stat.write_hit);
+	fprintf(fp_statout, "read_miss %d\n", stat.read_miss);
+	fprintf(fp_statout, "write_miss %d\n", stat.write_miss);
+	fprintf(fp_statout, "decode_stall %d\n", stat.decode_stall);
+	fprintf(fp_statout, "mem_stall %d\n", stat.mem_stall);
+
+	fclose(fp_statout); // close file
 }
 
 void create_dsram_output(unsigned int* dsram, char file_name[]) {
@@ -71,7 +98,7 @@ void create_tsram_output(TSRAM tsram[], char file_name[]) {
 	}
 	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%04X\n",tsram[i].msi+tsram[i].tag);
+		fprintf(fp_memout, "%08X\n",tsram[i].msi+tsram[i].tag);
 		tsram++;
 	}
 	fclose(fp_memout); // close file

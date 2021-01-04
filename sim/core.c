@@ -32,7 +32,9 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	//if we are in halt dont come in the function at all
 	if (pc == -1)
 		return -1;
-
+	
+	//first we need to update stat
+	stat->cycles += 1;
 	int inst, branch_resolution=-1;
 	Command cmd_if, cmd_id, cmd_exe, cmd_mem, cmd_wb;
 	int increment_pc = 1; //by defaulf we inc pc by 1
@@ -42,7 +44,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		inst = imem[pc];
 		cmd_if = line_to_command(inst, core_id); // create Command struct
 	}
-	update_pipeline(pipe, pc);
+	update_pipeline(pipe, pc, stat);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf_s(fp_trace, "%s\n", line_for_trace);
@@ -66,6 +68,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		{
 		}
 		else {
+			stat->decode_stall += 1;
 			pipe->WB = pipe->MEM;
 			pipe->MEM = pipe->EX;
 			pipe->EX = -10;
@@ -84,6 +87,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 
 	//memory
 	//index and tag for the memory store and load
+	regs[1] = sign_extend(cmd_mem.immiediate);
 	int index = get_index(regs[cmd_mem.rs] + regs[cmd_mem.rt]);
 	int tag = get_tag(regs[cmd_mem.rs] + regs[cmd_mem.rt]);
 
@@ -92,11 +96,9 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		//cache hit
 		if (tsram[index].tag == tag && tsram[index].msi != 0) {// i have the data in my dsram so i can get it
 			stat->read_hit += 1;
-			//pc++;
 		}
 		//invalid data (cache miss)
 		else if (tsram[index].msi == 0 || tsram[index].msi == 1) {
-			stat->read_miss += 1;
 			if (last_bus->bus_busy == 1) {//put stall
 				stat->mem_stall += 1;
 				pipe->WB = -10;
@@ -109,6 +111,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 					last_bus->flush_cycle = cycle + 64;
 					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
 					stat->read_hit -= 1;//becuase in the lw its not really hit
+					stat->read_miss += 1;
 				}
 				stat->mem_stall += 1;
 				pipe->WB = -10;
@@ -168,6 +171,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 			}
 			else {
 				stat->write_miss += 1;
+				stat->write_hit -= 1; //after 64 cycles we dont really hit
 				last_bus->bus_origid = pipe->core_id;
 				last_bus->bus_busy = 1;//start transaction
 				last_bus->bus_cmd = 2;//busrdx
@@ -211,9 +215,13 @@ int hazard_from_command(Command id, Command older) {
 		if (older.rd == id.rt || older.rd == id.rs)
 			return 1;
 	}
-	else if (id.opcode >= 9 && id.opcode <= 15 ||id.opcode==17|| id.opcode==19) {//jump or sw opcode
+	else if (id.opcode >= 9 && id.opcode <= 15) {//jump or sw opcode
 		if (older.rd == id.rt || older.rd == id.rs || older.rd==id.rd)
 				return 1;
+	}
+	else if (id.opcode == 17 || id.opcode == 19) {//jump or sw opcode
+		if (older.rd == id.rd && older.opcode != id.opcode)//also check that both orders are not sw
+			return 1;
 	}
 	return 0;
 }
@@ -369,8 +377,10 @@ void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIP
 	init_pipe(3, pipe_3);
 }
 
-void update_pipeline(PIPE_ptr pipe, int pc)
+void update_pipeline(PIPE_ptr pipe, int pc,STAT_ptr stat)
 {
+	if (pipe->MEM != -10)
+		stat->instructions += 1;
 	if (pc == pipe->IF && pc>=0)
 		return;
 	pipe->WB = pipe->MEM;
@@ -399,13 +409,13 @@ BUS_ptr initilize_bus() {
 
 int get_tag(int address) {
 	int tag = 0;
-	tag = get_byte(address, 2) + get_byte(address, 3)+ get_byte(address, 4);
+	tag = get_byte(address, 2) + (get_byte(address, 3)*16)+ (get_byte(address, 4)*16*16);
 	return tag;
 }
 
 int get_index(int address) {
 	int index = 0;
-	index = get_byte(address, 0) + get_byte(address, 1);
+	index = get_byte(address, 0) + (get_byte(address, 1) * 16);
 	return index;
 }
 	
@@ -587,7 +597,6 @@ Command line_to_command(unsigned int inst, int core_id)
 
 int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_bus, unsigned int* dsram,
 	TSRAM tsram[], STAT_ptr stat, PIPE_ptr pipe,int* cycle,Watch_ptr watch) {
-
 	//index and tag for the memory store and load
 	int index = get_index(regs[cmd.rs] + regs[cmd.rt]);
 	int tag = get_tag(regs[cmd.rs] + regs[cmd.rt]);

@@ -47,10 +47,6 @@ unsigned int dsram_1[DSRAM_SIZE] = { 0 };
 unsigned int dsram_2[DSRAM_SIZE] = { 0 };
 unsigned int dsram_3[DSRAM_SIZE] = { 0 };
 
-
-//initialize DSRAM list for handling the flush.
-unsigned int* dsram_list[] = { dsram_0, dsram_1 , dsram_2, dsram_3 ,mem };
-
 // initialize TSRAM for each core
 TSRAM tsram_0[TSRAM_SIZE];
 TSRAM tsram_1[TSRAM_SIZE];
@@ -152,7 +148,7 @@ int main(int argc, char* argv[]) {
 	write_output_files(argv, regs_0, regs_1, regs_2, regs_3,
 		dsram_0, dsram_1, dsram_2, dsram_3,
 		&tsram_0, &tsram_1, &tsram_2, &tsram_3
-		,mem);
+		,mem,stat_0,stat_1,stat_2,stat_3);
 
 	//close all files
 	close_trace_files(core_0_trace, core_1_trace, core_2_trace, core_3_trace, bus_trace);

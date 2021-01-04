@@ -103,7 +103,7 @@ void init_pipe(int core_id, PIPE_ptr pipe);
 void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIPE_ptr pipe_3);
 
 //each cycle update the pipline with the PC
-void update_pipeline(PIPE_ptr pipe, int pc);
+void update_pipeline(PIPE_ptr pipe, int pc, STAT_ptr stat);
 
 //function for initilize the bus for all the cores.
 BUS_ptr initilize_bus();
