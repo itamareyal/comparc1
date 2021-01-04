@@ -25,7 +25,7 @@ output.c
 ------------------------------------------------------------------------------------*/
 void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int* regs_3,
 	unsigned int* dsram_0, unsigned int* dsram_1, unsigned int* dsram_2, unsigned int* dsram_3,
-	TSRAM_ptr tsram_0[], TSRAM_ptr tsram_1[], TSRAM_ptr tsram_2[], TSRAM_ptr tsram_3[]
+	TSRAM tsram_0[], TSRAM tsram_1[], TSRAM tsram_2[], TSRAM tsram_3[]
 	, unsigned int* mem)
 {
 	create_memout(mem, args[6]);
@@ -61,7 +61,7 @@ void create_dsram_output(unsigned int* dsram, char file_name[]) {
 	fclose(fp_memout); // close file
 }
 
-void create_tsram_output(TSRAM_ptr tsram[], char file_name[]) {
+void create_tsram_output(TSRAM tsram[], char file_name[]) {
 	FILE* fp_memout = NULL;
 	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
@@ -71,7 +71,7 @@ void create_tsram_output(TSRAM_ptr tsram[], char file_name[]) {
 	}
 	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%04X\n",tsram[i]->msi+tsram[i]->tag);
+		fprintf(fp_memout, "%04X\n",tsram[i].msi+tsram[i].tag);
 		tsram++;
 	}
 	fclose(fp_memout); // close file

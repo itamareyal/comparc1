@@ -33,8 +33,10 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	if (pc == -1)
 		return -1;
 
-	int inst;
+	int inst, branch_resolution=-1;
 	Command cmd_if, cmd_id, cmd_exe, cmd_mem, cmd_wb;
+	int increment_pc = 1; //by defaulf we inc pc by 1
+
 	//fetch only if we are not in stall
 	if (pc >= -2) {
 		inst = imem[pc];
@@ -45,20 +47,6 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf_s(fp_trace, "%s\n", line_for_trace);
 	snoop_bus(last_bus, tsram,cycle,core_id, dsram);
-
-	//write back
-	inst = imem[pipe->WB];
-	cmd_wb = line_to_command(inst, core_id);
-	if (pipe->WB < -1)//if we are in stall
-		return ++pc;
-	else if (cmd_wb.opcode > 15 || cmd_wb.opcode < 9) {//cant execute the jump opcode again
-		regs[1] = sign_extend(cmd_wb.immiediate);//first we do sign extend to immiediate
-		pc = execution(regs, pc, cmd_wb, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
-		if (pc == -1)
-			return -1;
-	}
-	else//case jump order not taken and got to write back stage we need to do ++pc anyway
-		return ++pc;
 
 	//decode to see errors
 	inst = imem[pipe->ID];
@@ -71,42 +59,161 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	inst = imem[pipe->WB];
 	cmd_wb = line_to_command(inst, core_id);
 	if (data_hazard(cmd_id, cmd_exe, cmd_mem, cmd_wb)) {//detect data hazrds
-		pipe->WB = pipe->MEM;
-		pipe->MEM = pipe->EX;
-		pipe->EX = -10;
-		return pc;
+		if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
+			increment_pc = 0;
+		}
+		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20&& last_bus->bus_cmd!=3)//data hazard when try to access memory
+		{
+		}
+		else {
+			pipe->WB = pipe->MEM;
+			pipe->MEM = pipe->EX;
+			pipe->EX = -10;
+			increment_pc = 0;
+		}
 	}
-	if (cmd_id.opcode == 20 || cmd_exe.opcode == 20 || cmd_mem.opcode == 20) {//we handle halt in decode stage
-		pipe->IF = -10;
-		pc = -10;
-		return pc;
+	//branch resolution of decode
+	else if (cmd_id.opcode <= 15 && cmd_id.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
+		branch_resolution = execution(regs, pc, cmd_id, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
 	}
 
-	//execution of decode
-	if (cmd_id.opcode <= 15 && cmd_id.opcode >= 9) {//jal=> have to jump, other jump opcode maybe
-		pc = execution(regs, pc, cmd_id, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
-		return pc;
+	if (cmd_id.opcode == 20 || cmd_exe.opcode == 20 || cmd_mem.opcode == 20|| cmd_wb.opcode==20) {//we handle halt in decode stage
+		pipe->IF = -10;
+		branch_resolution = -10;
 	}
-	return pc;
+
+	//memory
+	//index and tag for the memory store and load
+	int index = get_index(regs[cmd_mem.rs] + regs[cmd_mem.rt]);
+	int tag = get_tag(regs[cmd_mem.rs] + regs[cmd_mem.rt]);
+
+	//for lw and ll opcode in the memory stage
+	if (cmd_mem.opcode == 16 || cmd_mem.opcode == 18) {//if we are in lw or ll
+		//cache hit
+		if (tsram[index].tag == tag && tsram[index].msi != 0) {// i have the data in my dsram so i can get it
+			stat->read_hit += 1;
+			//pc++;
+		}
+		//invalid data (cache miss)
+		else if (tsram[index].msi == 0 || tsram[index].msi == 1) {
+			stat->read_miss += 1;
+			if (last_bus->bus_busy == 1) {//put stall
+				stat->mem_stall += 1;
+				pipe->WB = -10;
+			}
+			else {
+				if (last_bus->bus_origid != pipe->core_id) {//create bus read
+					last_bus->bus_origid = pipe->core_id;
+					last_bus->bus_busy = 1;//start transaction
+					last_bus->bus_cmd = 1;//bus read
+					last_bus->flush_cycle = cycle + 64;
+					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+					stat->read_hit -= 1;//becuase in the lw its not really hit
+				}
+				stat->mem_stall += 1;
+				pipe->WB = -10;
+			}
+			increment_pc = 0;
+		}
+		//cache miss incorrect tag
+		else {
+			if (tsram[index].msi == 2) {//if the data in cache is modified we need to flush it to main memory
+				if (last_bus->bus_busy == 1) {
+					stat->mem_stall += 1;
+					pipe->WB = -10;
+				}
+				else {
+					tsram[index].msi = 1;
+					last_bus->bus_origid = pipe->core_id;
+					last_bus->bus_busy = 1;//start transaction
+					last_bus->bus_cmd = 3;//bus flush
+					last_bus->flush_cycle = -1;
+					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+					last_bus->bus_data = dsram[index];
+					stat->mem_stall += 1;
+					pipe->WB = -10;
+				}
+			}
+			increment_pc = 0;
+		}
+	}
+	//sw and sc opcodes handle in memory stage
+	if (cmd_mem.opcode == 17 || cmd_mem.opcode == 19) {
+		if (tsram[index].msi == 2 && tsram[index].tag == tag) {//write hit
+			stat->write_hit += 1;
+			//pc++;
+		}
+		else if (tsram[index].msi == 2 && tsram[index].tag != tag) {//modified need to  flush data to main memory
+			stat->write_miss += 1;
+			if (last_bus->bus_busy == 1) {
+				stat->mem_stall += 1;
+				pipe->WB = -10;
+			}
+			else {
+				tsram[index].msi = 1;
+				last_bus->bus_origid = pipe->core_id;
+				last_bus->bus_busy = 1;//start transaction
+				last_bus->bus_cmd = 3;//bus flush
+				last_bus->data_destination = 4;
+				last_bus->flush_cycle = -1;
+				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+				last_bus->bus_data = dsram[index];
+			}
+			increment_pc = 0;
+		}
+		else {//shared or invalid modes we have to do busrdx
+			if (last_bus->bus_busy == 1) {
+				stat->mem_stall += 1;
+				pipe->WB = -10;
+			}
+			else {
+				stat->write_miss += 1;
+				last_bus->bus_origid = pipe->core_id;
+				last_bus->bus_busy = 1;//start transaction
+				last_bus->bus_cmd = 2;//busrdx
+				last_bus->data_destination = pipe->core_id;
+				last_bus->flush_cycle = cycle + 64;
+				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+			}
+			increment_pc = 0;
+		}
+	}
+	
+	//write back
+	if (cmd_wb.opcode > 15 || cmd_wb.opcode < 9) {//cant execute the jump opcode again
+		regs[1] = sign_extend(cmd_wb.immiediate);//first we do sign extend to immiediate
+		pc = execution(regs, pc, cmd_wb, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
+		if (pc == -1)
+			return -1;
+	}
+
+	if (branch_resolution != -1 && (branch_resolution!=pc || branch_resolution==-10)) // update new pc to a branch taken
+		return branch_resolution;
+	else // update new pc to the same or next pc
+		return pc + increment_pc;
+
 }
 
 int data_hazard(Command id, Command exe, Command mem, Command wb) {
-	if (exe.opcode < 9 || exe.opcode==16 || exe.opcode==18) // arithmetic cmd saving new data to rd
-	{
-		if (exe.rd == id.rt || exe.rd == id.rs)
-			return 1;
-	}
-	
-	if (mem.opcode < 9 || mem.opcode == 16 || mem.opcode == 18) // arithmetic cmd saving new data to rd
-	{
-		if (mem.rd == id.rt || mem.rd == id.rs)
-			return 1;
-	}
+	//1 for data hazard and 0 for clear
 
-	if (wb.opcode < 9 || wb.opcode == 16 || wb.opcode == 18) // arithmetic cmd saving new data to rd
+	if (hazard_from_command(id, exe) + hazard_from_command(id, mem) + hazard_from_command(id, wb) != 0)
+		return 1;
+	return 0;
+}
+
+int hazard_from_command(Command id, Command older) {
+	if (older.opcode == 0 && older.rd == 0 && older.rs == 0 && older.rt==0) {//check if the older is stall
+		return 0;
+	}
+	if ((older.opcode > -1 && older.opcode < 9) || older.opcode == 16 || older.opcode == 18) // arithmetic cmd saving new data to rd
 	{
-		if (wb.rd == id.rt || wb.rd == id.rs)
+		if (older.rd == id.rt || older.rd == id.rs)
 			return 1;
+	}
+	else if (id.opcode >= 9 && id.opcode <= 15 ||id.opcode==17|| id.opcode==19) {//jump or sw opcode
+		if (older.rd == id.rt || older.rd == id.rs || older.rd==id.rd)
+				return 1;
 	}
 	return 0;
 }
@@ -211,6 +318,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->flush_cycle = -1;
 				last_bus->bus_data = mem[last_bus->bus_addr];
 			}
+			break;
 		}
 		case 2: // BusRdX
 		{
@@ -230,12 +338,14 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->flush_cycle = -1;
 				last_bus->bus_data = mem[last_bus->bus_addr];
 			}
+			break;
 		}
 		case 3: // Flush
 		{
 			mem[last_bus->bus_addr] = last_bus->bus_data;
 			// Flush had happened, reset bus to idle
 			last_bus = initilize_bus();
+			break;
 		}
 		}
 	}
@@ -456,13 +566,21 @@ unsigned int get_byte(unsigned int num, int pos)
 Command line_to_command(unsigned int inst, int core_id)
 {
 	Command cmd;
+	if (inst == -10) {// if the command is stall we put stall
+		cmd.opcode = -10;
+		cmd.rd = -10;
+		cmd.rs = -10;
+		cmd.rt = -10;
+		cmd.immiediate = -10;
+		cmd.core_id = core_id;
+		return cmd;
+	}
 	cmd.opcode = (get_byte(inst, 7) * 16) + get_byte(inst, 6);
 	cmd.rd = get_byte(inst, 5);
 	cmd.rs = get_byte(inst, 4);
 	cmd.rt = get_byte(inst, 3);
 	cmd.immiediate = (get_byte(inst, 2) * 16 * 16) + (get_byte(inst, 1) * 16) + get_byte(inst, 0);
 	cmd.core_id = core_id;
-
 	return cmd;
 }
 
@@ -483,7 +601,6 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 		else {
 			add(regs, cmd);
 			regs[0] = 0; // make sure $zero is zero
-			pc++;
 			break;
 		}
 	}
@@ -491,56 +608,48 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 	{
 		sub(regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 2: //and opcode
 	{
 		and (regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 3://or opcode
 	{
 		or (regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 4: //xor opcode
 	{
 		xor (regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 5: //mul opcode
 	{
 		mul(regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 6: //sll opcode
 	{
 		sll(regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 7: //sra opcode
 	{
 		sra(regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 8: //srl opcode
 	{
 		srl(regs, cmd);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 9: //beq opcode
@@ -587,108 +696,24 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 	}
 	case 16: //lw opcode
 	{
-		//invalid data (cache miss)
-		if (tsram[index].msi == 0) {
-			stat->read_miss += 1;
-			if (last_bus->bus_busy == 1) {//put stall
-				stat->mem_stall += 1;
-				pipe->WB = -10;
-				return pc;
-			}
-			else{
-				last_bus->bus_origid = pipe->core_id;
-				last_bus->bus_busy = 1;//start transaction
-				last_bus->bus_cmd = 1;//bus read
-				last_bus->flush_cycle = cycle + 64;
-				last_bus->bus_addr = regs[cmd.rs] + regs[cmd.rt];
-			}
-			pc++;
-			break;
-		}
-		//cache hit
-		else if (tsram[index].tag == tag){// i have the data in my dsram so i can get it
-			lw(regs, cmd, dsram);
-			stat->read_hit += 1;
-			regs[0] = 0;
-			pc++;
-			break;
-		}
-		//cache miss incorrect tag
-		else{
-			if (tsram[index].msi == 2) {//if the data in cache is modified we need to flush it to main memory
-				if (last_bus->bus_busy == 1) {
-					stat->mem_stall += 1;
-					pipe->WB = -10;
-					return pc;
-				}
-				else {
-					last_bus->bus_origid = pipe->core_id;
-					last_bus->bus_busy = 1;//start transaction
-					last_bus->bus_cmd = 3;//bus flush
-					last_bus->flush_cycle = -1;
-					last_bus->bus_addr = regs[cmd.rs] + regs[cmd.rt];
-					last_bus->bus_data = dsram[index];
-					break;
-				}
-			}
-		}
+		lw(regs, cmd, dsram);
+		break;
 	}
 	case 17: //sw opcode
 	{
-		if (tsram[index].msi == 2 && tsram[index].tag != tag) {//modified need to  flush data to main memory
-			stat->write_miss += 1;
-			if (last_bus->bus_busy == 1) {
-				stat->mem_stall += 1;
-				pipe->WB = -10;
-				return pc;
-			}
-			else {
-				last_bus->bus_origid = pipe->core_id;
-				last_bus->bus_busy = 1;//start transaction
-				last_bus->bus_cmd = 3;//bus flush
-				last_bus->data_destination = 4;
-				last_bus->flush_cycle = -1;
-				last_bus->bus_addr = regs[cmd.rs] + regs[cmd.rt];
-				last_bus->bus_data = dsram[index];
-			}
-			pc++;
-			break;
-		}
-		else if (tsram[index].msi == 2 && tsram[index].tag == tag) {//write hit
-			stat->write_hit += 1;
-			sw(regs, cmd, dsram, tsram);
-			pc++;
-			break;
-		}
-		else {//shared or invalid modes we have to do busrdx
-			if (last_bus->bus_busy == 1) {
-				stat->mem_stall += 1;
-				pipe->WB = -10;
-				return pc;
-			}
-			else {
-				stat->write_miss += 1;
-				last_bus->bus_origid = pipe->core_id;
-				last_bus->bus_busy = 1;//start transaction
-				last_bus->bus_cmd = 2;//busrdx
-				last_bus->data_destination = pipe->core_id;
-				last_bus->flush_cycle = cycle + 64;
-				last_bus->bus_addr = regs[cmd.rs] + regs[cmd.rt];
-			}
-		}
+		sw(regs, cmd, dsram, tsram);
+		break;
 	}
 	case 18: //ll opcode
 	{
 		ll(regs, cmd, dsram,watch,pipe->core_id);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 19: //sc opcode
 	{
 		sc(regs, cmd, dsram,watch);
 		regs[0] = 0;
-		pc++;
 		break;
 	}
 	case 20: //halt command, exit simulator

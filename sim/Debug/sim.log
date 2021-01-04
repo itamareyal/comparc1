@@ -1,13 +1,20 @@
-﻿  core.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(45,55): warning C4047: 'function': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(45,50): warning C4024: 'create_line_for_trace': different types for formal and actual parameter 4
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(144,56): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(157,56): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(206,40): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(225,43): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(366,25): warning C4013: 'neg_to_pos' undefined; assuming extern returning int
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(411,6): warning C4101: 'i': unreferenced local variable
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(602,39): warning C4047: '=': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(675,39): warning C4047: '=': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(393): warning C4716: 'initilize_STAT': must return a value
+﻿  main.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(133,104): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(133,96): warning C4024: 'core_execution': different types for formal and actual parameter 10
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(134,106): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(134,98): warning C4024: 'core_execution': different types for formal and actual parameter 10
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(135,107): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(135,99): warning C4024: 'core_execution': different types for formal and actual parameter 10
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(136,107): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(136,99): warning C4024: 'core_execution': different types for formal and actual parameter 10
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(142,43): warning C4047: 'function': 'int' differs in levels of indirection from 'int *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(142,38): warning C4024: 'create_line_for_bus': different types for formal and actual parameter 2
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,11): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,3): warning C4024: 'write_output_files': different types for formal and actual parameter 10
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,21): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,13): warning C4024: 'write_output_files': different types for formal and actual parameter 11
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,31): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,23): warning C4024: 'write_output_files': different types for formal and actual parameter 12
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(155,3): warning C4047: 'function': 'TSRAM *' differs in levels of indirection from 'TSRAM (*)[256]'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(154,33): warning C4024: 'write_output_files': different types for formal and actual parameter 13
   sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe
