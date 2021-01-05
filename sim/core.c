@@ -45,7 +45,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		inst = imem[pc];
 		cmd_if = line_to_command(inst, core_id); // create Command struct
 	}
-	update_pipeline(pipe, pc, stat);
+	update_pipeline(pipe, pc, stat,last_bus);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf_s(fp_trace, "%s\n", line_for_trace);
@@ -64,10 +64,10 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
 			increment_pc = 0;
 		}
-		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20 && last_bus->bus_cmd!=3)//data hazard when try to access memory
+		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20 && last_bus->bus_cmd != 3 && pipe->WB==-10)//data hazard when try to access memory
 		{
 		}
-		else {
+		else {//regular decode stall
 			stat->decode_stall += 1;
 			pipe->WB = pipe->MEM;
 			pipe->MEM = pipe->EX;
@@ -179,21 +179,27 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 				last_bus->flush_cycle = cycle + 64;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
 				last_bus->bus_data = 0;
+				pipe->WB = -10;
 			}
 			increment_pc = 0;
 		}
 	}
 	
 	//write back
-	if (cmd_wb.opcode > 15 || cmd_wb.opcode < 9) {//cant execute the jump opcode again
+	if ((cmd_wb.opcode > 15 || cmd_wb.opcode < 9)) {//cant execute the jump opcode again
+		if (pipe->WB == -10)
+			stat->instructions -= 1;
 		regs[1] = sign_extend(cmd_wb.immiediate);//first we do sign extend to immiediate
 		pc = execution(regs, pc, cmd_wb, imem, last_bus, dsram, tsram, stat, pipe, cycle, watch);
 		if (pc == -1)
 			return -1;
 	}
 
-	if (branch_resolution != -1 && (branch_resolution!=pc || branch_resolution==-10)) // update new pc to a branch taken
+	if (branch_resolution != -1 && (branch_resolution != pc || branch_resolution == -10)) { // update new pc to a branch taken
+		if (increment_pc == 0 && branch_resolution==-10)
+			return pc;
 		return branch_resolution;
+	}
 	else // update new pc to the same or next pc
 		return pc + increment_pc;
 
@@ -301,7 +307,7 @@ void snoop_bus(BUS_ptr last_bus, TSRAM tsram[], int* cycle, int core_id, unsigne
 
 void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 	if (last_bus->bus_busy == 0)
-		last_bus = initilize_bus();
+		last_bus = initilize_bus(last_bus);
 	else
 	{
 		switch (last_bus->bus_cmd) {
@@ -353,7 +359,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 		{
 			mem[last_bus->bus_addr] = last_bus->bus_data;
 			// Flush had happened, reset bus to idle
-			last_bus = initilize_bus();
+			last_bus = initilize_bus(last_bus);
 			break;
 		}
 		}
@@ -378,11 +384,11 @@ void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIP
 	init_pipe(3, pipe_3);
 }
 
-void update_pipeline(PIPE_ptr pipe, int pc,STAT_ptr stat)
+void update_pipeline(PIPE_ptr pipe, int pc,STAT_ptr stat, BUS_ptr bus)
 {
 	//gone have order to execute
-	if (pipe->MEM != -10)
-		stat->instructions += 1;
+	if (pipe->WB == -10 && pipe->ID==-10 && bus->bus_busy==1)
+		return;
 
 	//we are in stall but not hult
 	if (pc == pipe->IF && pc>=0)
@@ -396,12 +402,8 @@ void update_pipeline(PIPE_ptr pipe, int pc,STAT_ptr stat)
 	pipe->IF = pc;
 }
 
-BUS_ptr initilize_bus() {
-	BUS_ptr Bus;
-	Bus = (BUS_ptr)malloc(sizeof(BUS));
-	if (Bus == NULL)
-		return NULL;
-	Bus->bus_origid = 0;
+BUS_ptr initilize_bus(BUS_ptr Bus) {
+	Bus->bus_origid = -1;
 	Bus->bus_cmd = 0;
 	Bus->bus_data = 0;
 	Bus->bus_addr = 0;
@@ -606,6 +608,7 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 	//index and tag for the memory store and load
 	int index = get_index(regs[cmd.rs] + regs[cmd.rt]);
 	int tag = get_tag(regs[cmd.rs] + regs[cmd.rt]);
+	stat->instructions += 1;
 
 	switch (cmd.opcode)
 	{

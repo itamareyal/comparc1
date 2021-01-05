@@ -61,7 +61,11 @@ void create_stat_output(STAT stat, char file_name[]) {
 
 	fprintf(fp_statout, "cycles %d\n", stat.cycles);
 	fprintf(fp_statout, "instructions %d\n", stat.instructions);
+	if (stat.read_hit < 0)//special case
+		stat.read_hit = 0;
 	fprintf(fp_statout, "read_hit %d\n", stat.read_hit);
+	if (stat.write_hit>0)
+		stat.write_hit += 1;
 	fprintf(fp_statout, "write_hit %d\n", stat.write_hit);
 	fprintf(fp_statout, "read_miss %d\n", stat.read_miss);
 	fprintf(fp_statout, "write_miss %d\n", stat.write_miss);
