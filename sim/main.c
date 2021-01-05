@@ -47,10 +47,6 @@ unsigned int dsram_1[DSRAM_SIZE] = { 0 };
 unsigned int dsram_2[DSRAM_SIZE] = { 0 };
 unsigned int dsram_3[DSRAM_SIZE] = { 0 };
 
-
-//initialize DSRAM list for handling the flush.
-unsigned int* dsram_list[] = { dsram_0, dsram_1 , dsram_2, dsram_3 ,mem };
-
 // initialize TSRAM for each core
 TSRAM tsram_0[TSRAM_SIZE];
 TSRAM tsram_1[TSRAM_SIZE];
@@ -62,8 +58,8 @@ TSRAM* tsram_list[] = { tsram_0, tsram_1 , tsram_2, tsram_3 };
 
 int main(int argc, char* argv[]) {
 
-	BUS_ptr last_bus; // holds last trans on the bus for snooping at next iteration
-	BUS_ptr prev_bus;//keep the previus bus before the change
+	BUS last_bus; // holds last trans on the bus for snooping at next iteration
+	BUS prev_bus;//keep the previus bus before the change
 	int* bus_busy = 0; // 0-free for trans; 1-busy, wait for flush
 
 	// initialize cycle counter and 4 pc for each of the 4 cores.
@@ -124,25 +120,25 @@ int main(int argc, char* argv[]) {
 
 	//initilize_all_tsram(tsram_0, tsram_1, tsram_2, tsram_3);
 
-	last_bus= initilize_bus();
-	prev_bus = initilize_bus();
+	initilize_bus(&last_bus);
+	initilize_bus(&prev_bus);
 
 	// multi core execution loop. exits when all cores are done. 
 	while (pc_0 != -1 || pc_1 != -1 || pc_2 != -1 || pc_3 != -1) {
 		// execute for each core
-		pc_0 = core_execution(cycle, pc_0, 0, imem_0, regs_0,&pipe_0, core_0_trace, last_bus,dsram_0,&tsram_0, &stat_0, &watch);
-		pc_1 = core_execution(cycle, pc_1, 1, imem_1, regs_1, &pipe_1,core_1_trace, last_bus, dsram_1, &tsram_1, &stat_1, &watch);
-		pc_2 = core_execution(cycle, pc_2, 2, imem_2, regs_2, &pipe_2, core_2_trace, last_bus, dsram_2, &tsram_2, &stat_2, &watch);
-		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, &pipe_3, core_3_trace, last_bus, dsram_3, &tsram_3, &stat_3, &watch);
+		pc_0 = core_execution(cycle, pc_0, 0, imem_0, regs_0,&pipe_0, core_0_trace, &last_bus,dsram_0,&tsram_0, &stat_0, &watch);
+		pc_1 = core_execution(cycle, pc_1, 1, imem_1, regs_1, &pipe_1,core_1_trace, &last_bus, dsram_1, &tsram_1, &stat_1, &watch);
+		pc_2 = core_execution(cycle, pc_2, 2, imem_2, regs_2, &pipe_2, core_2_trace, &last_bus, dsram_2, &tsram_2, &stat_2, &watch);
+		pc_3 = core_execution(cycle, pc_3, 3, imem_3, regs_3, &pipe_3, core_3_trace, &last_bus, dsram_3, &tsram_3, &stat_3, &watch);
 	
-		execution_bus(last_bus, cycle, mem );
+		execution_bus(&last_bus, cycle, mem );
 
 		char line_for_bus[MAX_LINE_TRACE] = { 0 }; //create line for bus trace file
-		if (last_bus->bus_cmd != 0 && compare_bus(prev_bus,last_bus)==0) {
-			create_line_for_bus(line_for_bus, cycle, last_bus);
+		if (last_bus.bus_cmd != 0 && compare_bus(&prev_bus,&last_bus)==0) {
+			create_line_for_bus(line_for_bus, cycle, &last_bus);
 			fprintf_s(bus_trace, "%s\n", line_for_bus);
 		}
-		copy_bus(prev_bus, last_bus);
+		copy_bus(&prev_bus, &last_bus);
 		cycle+=1;
 		// execute single bus transaction (if called)
 
@@ -152,7 +148,7 @@ int main(int argc, char* argv[]) {
 	write_output_files(argv, regs_0, regs_1, regs_2, regs_3,
 		dsram_0, dsram_1, dsram_2, dsram_3,
 		&tsram_0, &tsram_1, &tsram_2, &tsram_3
-		,mem);
+		,mem,stat_0,stat_1,stat_2,stat_3);
 
 	//close all files
 	close_trace_files(core_0_trace, core_1_trace, core_2_trace, core_3_trace, bus_trace);

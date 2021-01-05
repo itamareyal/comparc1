@@ -48,14 +48,14 @@ typedef struct _pipe {
 }PIPE, * PIPE_ptr;
 
 typedef struct _stat {
-	unsigned int cycles; 
-	unsigned int instructions;	 
-	unsigned int read_hit;	 
-	unsigned int write_hit;	 
-	unsigned int read_miss;
-	unsigned int write_miss;
-	unsigned int decode_stall;
-	unsigned int mem_stall;
+	int cycles; 
+	int instructions;	 
+	int read_hit;	 
+	int write_hit;	 
+	int read_miss;
+	int write_miss;
+	int decode_stall;
+	int mem_stall;
 
 }STAT, * STAT_ptr;
 
@@ -103,10 +103,10 @@ void init_pipe(int core_id, PIPE_ptr pipe);
 void  initilize_pipelines(PIPE_ptr pipe_0, PIPE_ptr pipe_1, PIPE_ptr pipe_2, PIPE_ptr pipe_3);
 
 //each cycle update the pipline with the PC
-void update_pipeline(PIPE_ptr pipe, int pc);
+void update_pipeline(PIPE_ptr pipe, int pc, STAT_ptr stat, BUS_ptr bus);
 
 //function for initilize the bus for all the cores.
-BUS_ptr initilize_bus();
+BUS_ptr initilize_bus(BUS_ptr Bus);
 
 //get the tag from the address in memory
 int get_tag(int address);
