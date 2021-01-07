@@ -13,7 +13,7 @@ HardCodedData.h
 										DEFINES
 ------------------------------------------------------------------------------------*/
 #define NUMBER_REGISTER_SIZE 16
-#define I_MEM_SIZE 1024
+#define I_MEM_SIZE 1025
 #define BUFFER_MAX_SIZE 9
 #define SIZE_ARGV 28
 #define SIZE_MEM_MAX_LINE 21

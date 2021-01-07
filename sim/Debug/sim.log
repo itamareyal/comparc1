@@ -1,13 +1,28 @@
 ﻿  core.c
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(50,55): warning C4047: 'function': 'int' differs in levels of indirection from 'int *'
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(50,50): warning C4024: 'create_line_for_trace': different types for formal and actual parameter 4
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(80,79): warning C4047: 'function': 'unsigned int **' differs in levels of indirection from 'unsigned int *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(80,74): warning C4024: 'execution': different types for formal and actual parameter 7
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(111,40): warning C4047: '=': 'int' differs in levels of indirection from 'int *'
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(179,39): warning C4047: '=': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(266,56): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(279,56): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(193,64): warning C4047: 'function': 'unsigned int **' differs in levels of indirection from 'unsigned int *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(193,59): warning C4024: 'execution': different types for formal and actual parameter 7
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(255,85): warning C4028: formal parameter 5 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(266,88): warning C4047: '==': 'int' differs in levels of indirection from 'void *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(279,88): warning C4047: '==': 'int' differs in levels of indirection from 'void *'
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(328,40): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(348,43): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(494,25): warning C4013: 'neg_to_pos' undefined; assuming extern returning int
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(539,6): warning C4101: 'i': unreferenced local variable
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(629,62): warning C4028: formal parameter 4 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(629,90): warning C4028: formal parameter 6 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(630,16): warning C4028: formal parameter 7 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(907,59): warning C4028: formal parameter 4 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(911,25): warning C4047: 'function': 'unsigned int *' differs in levels of indirection from 'unsigned int **'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(911,20): warning C4024: 'put_msi_in_tsram': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(912,25): warning C4047: 'function': 'unsigned int *' differs in levels of indirection from 'unsigned int **'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(912,20): warning C4024: 'put_tag_in_tsram': different types for formal and actual parameter 1
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(917,47): warning C4028: formal parameter 3 different from declaration
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(927,47): warning C4028: formal parameter 3 different from declaration
 C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(521): warning C4716: 'initilize_STAT': must return a value
   sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe
