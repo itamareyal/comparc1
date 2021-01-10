@@ -17,19 +17,20 @@ core.h
 
 typedef struct _watch { 
 	int address[4];//the address we want to watch
-	int lock[4];// if lock ==0 its open else its close
+	int lock[4];// if lock=0 its open, lock=1 core watch it,lock=2 someone perform SC before and we need to fail
 }Watch,*Watch_ptr;
 
 typedef struct _bus {
 	unsigned int bus_origid; //3 bits. 0-3 cores; 4 mem
 	unsigned int bus_cmd;	 //2 bits
-	unsigned int bus_addr;	 //20 bits of address
+	int bus_addr;	 //20 bits of address
 	unsigned int bus_data;	 //32 bits of data. 1 word
 	int prev_cmd;
 	int flush_cycle;
 	int data_owner;
 	int data_destination;
 	int bus_busy;
+	int creation_cycle;
 }BUS, *BUS_ptr;
 
 //typedef struct _tsram {
@@ -175,4 +176,4 @@ int jal(int* regs, Command cmd, int pc);
 void lw(int* regs, Command cmd, int* dsram);
 void sw(int* regs, Command cmd, int* dsram, unsigned int* tsram);
 void ll(int* regs, Command cmd, int* dsram, Watch_ptr watch, int core_id);
-void sc(int* regs, Command cmd, int* dsram, Watch_ptr watch);
+void sc(int* regs, Command cmd, int* dsram, Watch_ptr watch, unsigned int* tsram);

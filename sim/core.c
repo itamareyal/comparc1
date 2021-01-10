@@ -26,17 +26,17 @@ Hold functions to dispatch and manage cores in the program
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
 
-int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *regs,
+int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* regs,
 	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, int* dsram,
-	unsigned int* tsram,STAT_ptr stat, Watch_ptr watch) {
+	unsigned int* tsram, STAT_ptr stat, Watch_ptr watch) {
 	//if we are in halt dont come in the function at all execpt snoop all the time include in halt
 	snoop_bus(last_bus, tsram, cycle, core_id, dsram);
 	if (pc == -1)
 		return -1;
-	
+
 	//first we need to update stat
 	stat->cycles += 1;
-	int inst, branch_resolution=-1;
+	int inst, branch_resolution = -1;
 	Command cmd_if, cmd_id, cmd_exe, cmd_mem, cmd_wb;
 	int increment_pc = 1; //by defaulf we inc pc by 1
 
@@ -45,7 +45,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 		inst = imem[pc];
 		cmd_if = line_to_command(inst, core_id); // create Command struct
 	}
-	update_pipeline(pipe, pc, stat,last_bus);
+	update_pipeline(pipe, pc, stat, last_bus);
 	char line_for_trace[MAX_LINE_TRACE] = { 0 }; //create line for trace file
 	create_line_for_trace(line_for_trace, regs, pc, cycle, pipe);//append to trace file
 	fprintf_s(fp_trace, "%s\n", line_for_trace);
@@ -61,11 +61,11 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 	inst = imem[pipe->WB];
 	cmd_wb = line_to_command(inst, core_id);
 	if (data_hazard(cmd_id, cmd_exe, cmd_mem, cmd_wb)) {//detect data hazrds
-		if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
-			increment_pc = 0;
-		}
-		else if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20 && last_bus->bus_cmd != 3 && pipe->WB==-10)//data hazard when try to access memory
-		{
+		//if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
+		//	increment_pc = 0;
+		//}
+		if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20 && (last_bus->bus_cmd != 3 || last_bus->data_destination!=core_id)) {
+
 		}
 		else {//regular decode stall
 			stat->decode_stall += 1;
@@ -110,6 +110,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 					last_bus->bus_cmd = 1;//bus read
 					last_bus->flush_cycle = cycle + 64;
 					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+					last_bus->creation_cycle = cycle;
 					stat->read_hit -= 1;//becuase in the lw its not really hit
 					stat->read_miss += 1;
 				}
@@ -133,6 +134,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 					last_bus->flush_cycle = -1;
 					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
 					last_bus->bus_data = dsram[index];
+					last_bus->creation_cycle = cycle;
 					stat->mem_stall += 1;
 					pipe->WB = -10;
 				}
@@ -161,6 +163,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 				last_bus->flush_cycle = -1;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
 				last_bus->bus_data = dsram[index];
+				last_bus->creation_cycle = cycle;
 			}
 			increment_pc = 0;
 		}
@@ -178,6 +181,7 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int *imem, int *reg
 				last_bus->data_destination = pipe->core_id;
 				last_bus->flush_cycle = cycle + 64;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+				last_bus->creation_cycle = cycle;
 				last_bus->bus_data = 0;
 				pipe->WB = -10;
 			}
@@ -256,6 +260,8 @@ void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, i
 	int tag, index;
 	tag = get_tag(last_bus->bus_addr);
 	index = get_index(last_bus->bus_addr);
+	if (last_bus->creation_cycle==cycle)
+		return;
 	switch (last_bus->bus_cmd) {
 	case 0: // no cmd
 	{
@@ -263,20 +269,19 @@ void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, i
 	}
 	case 1: // BusRd
 	{
-		if (get_msi_from_tsram(tsram[index]) == 0 || get_msi_from_tsram(tsram[index]) == NULL)
+		if (get_msi_from_tsram(tsram[index]) == 0)
 			break;
 		else if (get_msi_from_tsram(tsram[index]) == 1)
 			break;
 		else if (get_msi_from_tsram(tsram[index]) == 2) {//need to flush every one?
 			last_bus->bus_data = dsram[get_index(last_bus->bus_addr)];
 			last_bus->data_owner = core_id;
-			put_msi_in_tsram(tsram, index, 1);
 			break;
 		}
 		}
 	case 2 : // BusRdX
 	{
-		if (get_msi_from_tsram(tsram[index]) == 0 || get_msi_from_tsram(tsram[index]) == NULL)
+		if (get_msi_from_tsram(tsram[index]) == 0)
 			break;
 		else if (get_msi_from_tsram(tsram[index]) == 1) {
 			put_msi_in_tsram(tsram,index,0);
@@ -285,20 +290,25 @@ void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, i
 		else if (get_msi_from_tsram(tsram[index]) == 2) {
 			last_bus->bus_data = dsram[index];
 			last_bus->data_owner = core_id;
-			put_msi_in_tsram(tsram, index, 0);
 			break;
 		}
 	}
 	case 3: // Flush
 	{
-		if (core_id == last_bus->data_destination) {
+		if (last_bus->data_owner == core_id) {
+			if (last_bus->prev_cmd == 1)
+				put_msi_in_tsram(tsram, index, 1);
+			if (last_bus->prev_cmd == 2)
+				put_msi_in_tsram(tsram, index, 0);
+		}
+		else if (core_id == last_bus->data_destination) {
 			if (last_bus->prev_cmd == 2)
 				put_msi_in_tsram(tsram, index, 2);
 			else
 				put_msi_in_tsram(tsram, index, 1);
 			put_tag_in_tsram(tsram, index, tag);
 			dsram[index] = last_bus->bus_data;
-			last_bus->bus_busy = 0;//transaction complete
+			//last_bus->bus_busy = 0;//transaction complete
 		}
 		break;
 	}
@@ -324,6 +334,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->bus_cmd = 3;
 				last_bus->flush_cycle = -1;
 				mem[last_bus->bus_addr] = last_bus->bus_data;
+				last_bus->creation_cycle = cycle;
 			}
 			else if(cycle==last_bus->flush_cycle){
 				last_bus->data_destination = last_bus->bus_origid;
@@ -332,6 +343,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->bus_cmd = 3;
 				last_bus->flush_cycle = -1;
 				last_bus->bus_data = mem[last_bus->bus_addr];
+				last_bus->creation_cycle = cycle;
 			}
 			break;
 		}
@@ -344,6 +356,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->bus_cmd = 3;
 				last_bus->flush_cycle = -1;
 				mem[last_bus->bus_addr] = last_bus->bus_data;
+				last_bus->creation_cycle = cycle;
 			}
 			else if (cycle == last_bus->flush_cycle) {//made flush
 				last_bus->data_destination = last_bus->bus_origid;
@@ -352,6 +365,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 				last_bus->bus_cmd = 3;
 				last_bus->flush_cycle = -1;
 				last_bus->bus_data = mem[last_bus->bus_addr];
+				last_bus->creation_cycle = cycle;
 			}
 			break;
 		}
@@ -403,7 +417,7 @@ void update_pipeline(PIPE_ptr pipe, int pc,STAT_ptr stat, BUS_ptr bus)
 }
 
 BUS_ptr initilize_bus(BUS_ptr Bus) {
-	Bus->bus_origid = -1;
+	Bus->bus_origid = 5;
 	Bus->bus_cmd = 0;
 	Bus->bus_data = 0;
 	Bus->bus_addr = 0;
@@ -412,6 +426,7 @@ BUS_ptr initilize_bus(BUS_ptr Bus) {
 	Bus->bus_busy = 0;
 	Bus->prev_cmd = -1;
 	Bus->data_destination = -1;
+	Bus->creation_cycle = -1;
 	return Bus;
 }
 
@@ -594,8 +609,6 @@ void put_tag_in_tsram(unsigned int* tsram, int index, int tag) {
 	tsram[index] = new_line;
  }
 
-
-
 // this function extracts one byte from number
 unsigned int get_byte(unsigned int num, int pos)
 {
@@ -753,7 +766,7 @@ int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_b
 	}
 	case 19: //sc opcode
 	{
-		sc(regs, cmd, dsram,watch);
+		sc(regs, cmd, dsram,watch,tsram);
 		regs[0] = 0;
 		break;
 	}
@@ -914,7 +927,7 @@ void sw(int* regs, Command cmd, int* dsram, unsigned int* tsram[])
 }
 
 //ll command.
-void ll(int* regs, Command cmd, unsigned int* dsram,Watch_ptr watch, int core_id)
+void ll(int* regs, Command cmd, int* dsram,Watch_ptr watch, int core_id)
 {
 	if (get_index(regs[cmd.rs] + regs[cmd.rt]) < DSRAM_SIZE) {
 		regs[cmd.rd] = dsram[get_index(regs[cmd.rs] + regs[cmd.rt])];
@@ -924,8 +937,26 @@ void ll(int* regs, Command cmd, unsigned int* dsram,Watch_ptr watch, int core_id
 }
 
 //sw command.
-void sc(int* regs, Command cmd, unsigned int* dsram , Watch_ptr watch)
+void sc(int* regs, Command cmd, int* dsram , Watch_ptr watch, unsigned int* tsram)
 {
-
+	int i = 0;
+	if (get_index(regs[cmd.rs] + regs[cmd.rt]) < DSRAM_SIZE) {
+		if (watch->lock[cmd.core_id] == 2) {
+			regs[cmd.rd] = 0;//failed
+			watch->lock[cmd.core_id] = 0;
+			watch->address[cmd.core_id] = 0;
+			return;
+		}
+		dsram[get_index(regs[cmd.rs] + regs[cmd.rt])] = regs[cmd.rd];
+		put_msi_in_tsram(tsram, regs[cmd.rs] + regs[cmd.rt], 2);
+		put_tag_in_tsram(tsram, regs[cmd.rs] + regs[cmd.rt], get_tag(regs[cmd.rs] + regs[cmd.rt]));
+		regs[cmd.rd] = 1;//success
+		for (i = 0; i < 4; i++) {
+			if (watch->lock[i] == 1 && watch->address[i] == regs[cmd.rs] + regs[cmd.rt]) {
+				if (i != cmd.core_id)//other core watch already our address that we just updated
+					watch->lock[i] = 2;
+			}
+		}
+	}	
 }
 
