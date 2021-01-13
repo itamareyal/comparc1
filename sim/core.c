@@ -26,9 +26,9 @@ Hold functions to dispatch and manage cores in the program
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
 
-int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* regs,
+int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, int* dsram,
-	unsigned int* tsram, STAT_ptr stat, Watch_ptr watch) {
+	int* tsram, STAT_ptr stat, Watch_ptr watch) {
 	//if we are in halt dont come in the function at all execpt snoop all the time include in halt
 	snoop_bus(last_bus, tsram, cycle, core_id, dsram);
 	if (pc == -1)
@@ -61,9 +61,6 @@ int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* reg
 	inst = imem[pipe->WB];
 	cmd_wb = line_to_command(inst, core_id);
 	if (data_hazard(cmd_id, cmd_exe, cmd_mem, cmd_wb)) {//detect data hazrds
-		//if (last_bus->bus_origid == core_id) {//special case for double hazard of memory and stractural
-		//	increment_pc = 0;
-		//}
 		if (cmd_mem.opcode > 15 && cmd_mem.opcode < 20 && (last_bus->bus_cmd != 3 || last_bus->data_destination!=core_id)) {
 
 		}
@@ -226,11 +223,11 @@ int hazard_from_command(Command id, Command older) {
 		if (older.rd == id.rt || older.rd == id.rs)
 			return 1;
 	}
-	else if (id.opcode >= 9 && id.opcode <= 15) {//jump or sw opcode
+	if (id.opcode >= 9 && id.opcode <= 15) {//jump or sw opcode
 		if (older.rd == id.rt || older.rd == id.rs || older.rd==id.rd)
 				return 1;
 	}
-	else if (id.opcode == 17 || id.opcode == 19) {//jump or sw opcode
+	if (id.opcode == 17 || id.opcode == 19) {//jump or sw opcode
 		if (older.rd == id.rd && older.opcode != id.opcode)//also check that both orders are not sw
 			return 1;
 	}
@@ -256,10 +253,13 @@ void copy_bus(BUS_ptr prev_bus, BUS_ptr curr_bus) {
 	prev_bus->bus_data = curr_bus->bus_data;
 }
 
-void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, int* dsram) {
+void snoop_bus(BUS_ptr last_bus, int* tsram, int* cycle, int core_id, int* dsram) {
 	int tag, index;
 	tag = get_tag(last_bus->bus_addr);
 	index = get_index(last_bus->bus_addr);
+	/*if (core_id == 2) {
+		printf("%d %d %d\n",cycle, tsram[index],dsram[index]);
+	}*/
 	if (last_bus->creation_cycle==cycle)
 		return;
 	switch (last_bus->bus_cmd) {
@@ -273,7 +273,7 @@ void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, i
 			break;
 		else if (get_msi_from_tsram(tsram[index]) == 1)
 			break;
-		else if (get_msi_from_tsram(tsram[index]) == 2) {//need to flush every one?
+		else if (get_msi_from_tsram(tsram[index]) == 2 && get_tag_from_tsram(tsram[index])==tag) {//need to flush every one?
 			last_bus->bus_data = dsram[get_index(last_bus->bus_addr)];
 			last_bus->data_owner = core_id;
 			break;
@@ -283,11 +283,11 @@ void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, i
 	{
 		if (get_msi_from_tsram(tsram[index]) == 0)
 			break;
-		else if (get_msi_from_tsram(tsram[index]) == 1) {
+		else if (get_msi_from_tsram(tsram[index]) == 1 && get_tag_from_tsram(tsram[index]) == tag) {
 			put_msi_in_tsram(tsram,index,0);
 			break;
 		}
-		else if (get_msi_from_tsram(tsram[index]) == 2) {
+		else if (get_msi_from_tsram(tsram[index]) == 2 && get_tag_from_tsram(tsram[index]) == tag) {
 			last_bus->bus_data = dsram[index];
 			last_bus->data_owner = core_id;
 			break;
@@ -315,7 +315,7 @@ void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, i
 	}
 }
 
-void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
+void execution_bus(BUS_ptr last_bus, int *cycle, int mem[]) {
 	if (last_bus->bus_busy == 0)
 		last_bus = initilize_bus(last_bus);
 	else
@@ -373,6 +373,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, unsigned int mem[]) {
 		{
 			mem[last_bus->bus_addr] = last_bus->bus_data;
 			// Flush had happened, reset bus to idle
+			
 			last_bus = initilize_bus(last_bus);
 			break;
 		}
@@ -596,28 +597,28 @@ int get_msi_from_tsram(int line) {
 	return get_byte(line, 3);
 }
 
-void put_msi_in_tsram(unsigned int* tsram,int index, int msi) {
+void put_msi_in_tsram(int* tsram,int index, int msi) {
 	msi = msi * 16 * 16 * 16;
 	int tag=get_tag_from_tsram(tsram[index]);
 	int new_line = msi + tag;
 	tsram[index] = new_line;
 }
 
-void put_tag_in_tsram(unsigned int* tsram, int index, int tag) {
-	unsigned int msi = 16*16*16*get_msi_from_tsram(tsram[index]);
-	unsigned int new_line = msi + tag;
+void put_tag_in_tsram(int* tsram, int index, int tag) {
+	int msi = 16*16*16*get_msi_from_tsram(tsram[index]);
+	int new_line = msi + tag;
 	tsram[index] = new_line;
  }
 
 // this function extracts one byte from number
-unsigned int get_byte(unsigned int num, int pos)
+int get_byte(int num, int pos)
 {
-	unsigned int mask = 0xf << (pos * 4);
+	int mask = 0xf << (pos * 4);
 	return ((num & mask) >> (pos * 4));
 }
 
 // this function creates a struct Command from a string in memory
-Command line_to_command(unsigned int inst, int core_id)
+Command line_to_command(int inst, int core_id)
 {
 	Command cmd;
 	if (inst == -10) {// if the command is stall we put stall
@@ -639,8 +640,8 @@ Command line_to_command(unsigned int inst, int core_id)
 }
 
 
-int execution(int regs[], int pc, Command cmd, unsigned int* mem, BUS_ptr last_bus, int* dsram,
-	unsigned int* tsram, STAT_ptr stat, PIPE_ptr pipe, int* cycle,Watch_ptr watch) {
+int execution(int regs[], int pc, Command cmd, int* mem, BUS_ptr last_bus, int* dsram,
+	int* tsram, STAT_ptr stat, PIPE_ptr pipe, int* cycle,Watch_ptr watch) {
 	//index and tag for the memory store and load
 	int index = get_index(regs[cmd.rs] + regs[cmd.rt]);
 	int tag = get_tag(regs[cmd.rs] + regs[cmd.rt]);
@@ -917,7 +918,7 @@ void lw(int* regs, Command cmd, int* dsram)
 }
 
 //sw command.
-void sw(int* regs, Command cmd, int* dsram, unsigned int* tsram[])
+void sw(int* regs, Command cmd, int* dsram, int* tsram[])
 {
 	if (get_index(regs[cmd.rs] + regs[cmd.rt]) < DSRAM_SIZE) {
 		dsram[get_index(regs[cmd.rs] + regs[cmd.rt])] = regs[cmd.rd];
@@ -937,7 +938,7 @@ void ll(int* regs, Command cmd, int* dsram,Watch_ptr watch, int core_id)
 }
 
 //sw command.
-void sc(int* regs, Command cmd, int* dsram , Watch_ptr watch, unsigned int* tsram)
+void sc(int* regs, Command cmd, int* dsram , Watch_ptr watch, int* tsram)
 {
 	int i = 0;
 	if (get_index(regs[cmd.rs] + regs[cmd.rt]) < DSRAM_SIZE) {

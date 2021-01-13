@@ -21,10 +21,10 @@ typedef struct _watch {
 }Watch,*Watch_ptr;
 
 typedef struct _bus {
-	unsigned int bus_origid; //3 bits. 0-3 cores; 4 mem
-	unsigned int bus_cmd;	 //2 bits
+	int bus_origid; //3 bits. 0-3 cores; 4 mem
+	int bus_cmd;	 //2 bits
 	int bus_addr;	 //20 bits of address
-	unsigned int bus_data;	 //32 bits of data. 1 word
+	int bus_data;	 //32 bits of data. 1 word
 	int prev_cmd;
 	int flush_cycle;
 	int data_owner;
@@ -32,11 +32,6 @@ typedef struct _bus {
 	int bus_busy;
 	int creation_cycle;
 }BUS, *BUS_ptr;
-
-//typedef struct _tsram {
-//	unsigned int msi;		 //2 bits 0-i 1-s 2-m
-//	unsigned int tag;		 //12 bits
-//}TSRAM, *TSRAM_ptr;
 
 //holds all the information about the commands inside the pipeline
 typedef struct _pipe {
@@ -61,12 +56,12 @@ typedef struct _stat {
 }STAT, * STAT_ptr;
 
 typedef struct _command {
-	unsigned int opcode;
-	unsigned int rd;
-	unsigned int rs;
-	unsigned int rt;
-	unsigned int immiediate;
-	unsigned int core_id;
+	int opcode;
+	int rd;
+	int rs;
+	int rt;
+	int immiediate;
+	int core_id;
 }Command;
 
 /*------------------------------------------------------------------------------------
@@ -75,9 +70,9 @@ typedef struct _command {
 
 
 //execution of one core.
-int core_execution(int* cycle, int pc, int core_id, unsigned int* imem, int* regs, 
+int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs, 
 	PIPE_ptr pipe, FILE* fp_trace, BUS_ptr last_bus, int* dsram,
-	unsigned int* tsram, STAT_ptr stat, Watch_ptr watch);
+	int* tsram, STAT_ptr stat, Watch_ptr watch);
 
 //function to check if there is data hazard
 int data_hazard(Command id, Command exe, Command mem, Command wb);
@@ -92,10 +87,10 @@ int compare_bus(BUS_ptr prev_bus, BUS_ptr curr_bus);
 void copy_bus(BUS_ptr prev_bus, BUS_ptr curr_bus);
 
 //function for the snoop between the cores.
-void snoop_bus(BUS_ptr last_bus, unsigned int* tsram, int* cycle, int core_id, unsigned int* dsram);
+void snoop_bus(BUS_ptr last_bus, int* tsram, int* cycle, int core_id, int* dsram);
 
 // execution of all the commands except the flush
-void execution_bus(BUS_ptr last_bus, int* cycle, unsigned int mem[]);
+void execution_bus(BUS_ptr last_bus, int* cycle, int mem[]);
 
 //initilize one pipeline
 void init_pipe(int core_id, PIPE_ptr pipe);
@@ -140,20 +135,20 @@ int get_tag_from_tsram(int line);
 int get_msi_from_tsram(int line);
 
 //put new value for tsram
-void put_msi_in_tsram(unsigned int* tsram, int index, int msi);
+void put_msi_in_tsram(int* tsram, int index, int msi);
 
 //put new value for tsram
-void put_tag_in_tsram(unsigned int* tsram, int index, int tag);
+void put_tag_in_tsram(int* tsram, int index, int tag);
 
 //get us one byte from 32 bit.
-unsigned int get_byte(unsigned int num, int pos);
+int get_byte(int num, int pos);
 
 //get line in assembler and convert it to type command
-Command line_to_command(unsigned int inst, int core_id);
+Command line_to_command(int inst, int core_id);
 
 //responsible to oparets everything
 int execution(int regs[], int pc, Command cmd, int* mem, BUS_ptr last_bus,
-	unsigned int* dsram, unsigned int* tsram[], STAT_ptr stat,
+	int* dsram, int* tsram[], STAT_ptr stat,
 	PIPE_ptr pipe, int* cycle, Watch_ptr watch);
 
 //all the commands in order of the opcodes.
@@ -174,6 +169,6 @@ int ble(int* regs, Command cmd, int pc);
 int bge(int* regs, Command cmd, int pc);
 int jal(int* regs, Command cmd, int pc);
 void lw(int* regs, Command cmd, int* dsram);
-void sw(int* regs, Command cmd, int* dsram, unsigned int* tsram);
+void sw(int* regs, Command cmd, int* dsram, int* tsram);
 void ll(int* regs, Command cmd, int* dsram, Watch_ptr watch, int core_id);
-void sc(int* regs, Command cmd, int* dsram, Watch_ptr watch, unsigned int* tsram);
+void sc(int* regs, Command cmd, int* dsram, Watch_ptr watch, int* tsram);
