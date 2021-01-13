@@ -61,7 +61,7 @@ FILE* open_file(char* file_name, char* file_open_type) {
 }
 
 // open imem & mem files and read them to arrays
-int open_mem_files(int argc, char* argv[], unsigned int imem_0[], unsigned int imem_1[], unsigned int imem_2[], unsigned int imem_3[], unsigned int mem[]) {
+int open_mem_files(int argc, char* argv[], int imem_0[], int imem_1[], int imem_2[], int imem_3[], int mem[]) {
 	
 	char** args = check_args(argc, argv);
 	read_memin_imem(imem_0, args[1]);
@@ -72,7 +72,6 @@ int open_mem_files(int argc, char* argv[], unsigned int imem_0[], unsigned int i
 
 	return 0;
 }
-
 
 int open_trace_files(char* args[], FILE **core_0_trace, FILE** core_1_trace, FILE** core_2_trace, FILE** core_3_trace, FILE** bus_trace) {
 	char* mode = "w";
@@ -94,7 +93,7 @@ void close_trace_files(FILE* core_0_trace, FILE* core_1_trace, FILE* core_2_trac
 	fclose(bus_trace);
 }
 
-int read_memin_imem(unsigned int* mem, char* address)
+int read_memin_imem(int* mem, char* address)
 {
 	FILE* fp=NULL;
 	const char* mode = "r";

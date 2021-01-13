@@ -24,9 +24,9 @@ output.c
 										IMPLEMENTATION
 ------------------------------------------------------------------------------------*/
 void write_output_files(char** args, int* regs_0, int* regs_1, int* regs_2, int* regs_3,
-	unsigned int* dsram_0, unsigned int* dsram_1, unsigned int* dsram_2, unsigned int* dsram_3,
-	TSRAM tsram_0[], TSRAM tsram_1[], TSRAM tsram_2[], TSRAM tsram_3[]
-	, unsigned int* mem,STAT stat_0, STAT stat_1, STAT stat_2, STAT stat_3)
+	int* dsram_0, int* dsram_1,int* dsram_2, int* dsram_3,
+	int* tsram_0, int* tsram_1, int* tsram_2, int* tsram_3
+	, int* mem,STAT stat_0, STAT stat_1, STAT stat_2, STAT stat_3)
 {
 	create_memout(mem, args[6]);
 	create_regout(regs_0, args[7]);
@@ -75,7 +75,7 @@ void create_stat_output(STAT stat, char file_name[]) {
 	fclose(fp_statout); // close file
 }
 
-void create_dsram_output(unsigned int* dsram, char file_name[]) {
+void create_dsram_output(int* dsram, char file_name[]) {
 	FILE* fp_memout = NULL;
 
 	fopen_s(&fp_memout, file_name, "w"); // open new file
@@ -92,7 +92,7 @@ void create_dsram_output(unsigned int* dsram, char file_name[]) {
 	fclose(fp_memout); // close file
 }
 
-void create_tsram_output(TSRAM tsram[], char file_name[]) {
+void create_tsram_output(int* tsram, char file_name[]) {
 	FILE* fp_memout = NULL;
 	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
@@ -102,7 +102,7 @@ void create_tsram_output(TSRAM tsram[], char file_name[]) {
 	}
 	for (int i = 0; i < TSRAM_SIZE; i++) // print memory to file
 	{
-		fprintf(fp_memout, "%08X\n",tsram[i].msi+tsram[i].tag);
+		fprintf(fp_memout, "%08X\n", *tsram);
 		tsram++;
 	}
 	fclose(fp_memout); // close file
@@ -125,7 +125,7 @@ void create_regout(int regs[], char file_name[]) {
 	fclose(fp_regout); // close file
 }
 
-void create_memout(unsigned int* mem, char file_name[]) {
+void create_memout(int* mem, char file_name[]) {
 	FILE* fp_memout = NULL;
 	fopen_s(&fp_memout, file_name, "w"); // open new file
 	if (fp_memout == NULL) // handle error
@@ -133,7 +133,8 @@ void create_memout(unsigned int* mem, char file_name[]) {
 		printf("error opening file");
 		exit(1);
 	}
-	for (int i = 0; i < I_MEM_SIZE; i++) // print memory to file
+	
+	for (int i = 0; i < MAIN_MEM_SIZE ; i++) // print memory to file
 	{
 		fprintf(fp_memout, "%08X\n", *mem);
 		mem++;

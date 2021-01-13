@@ -1,13 +1,4 @@
-﻿  core.c
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(50,55): warning C4047: 'function': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(50,50): warning C4024: 'create_line_for_trace': different types for formal and actual parameter 4
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(111,40): warning C4047: '=': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(179,39): warning C4047: '=': 'int' differs in levels of indirection from 'int *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(266,56): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(279,56): warning C4047: '==': 'unsigned int' differs in levels of indirection from 'void *'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(328,40): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(348,43): warning C4047: '==': 'int *' differs in levels of indirection from 'int'
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(494,25): warning C4013: 'neg_to_pos' undefined; assuming extern returning int
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(539,6): warning C4101: 'i': unreferenced local variable
-C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\core.c(521): warning C4716: 'initilize_STAT': must return a value
+﻿  main.c
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(124,43): warning C4047: 'function': 'int' differs in levels of indirection from 'int *'
+C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\main.c(124,38): warning C4024: 'create_line_for_bus': different types for formal and actual parameter 2
   sim.vcxproj -> C:\Users\KfirRabinovitch\Documents\GitHub\comparc1\sim\Debug\sim.exe
