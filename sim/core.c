@@ -95,23 +95,24 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 			stat->read_hit += 1;
 		}
 		//invalid data (cache miss)
-		else if (get_msi_from_tsram(tsram[index]) == 0) {
+		else if (get_msi_from_tsram(tsram[index]) == 0 || get_msi_from_tsram(tsram[index]) == 1) {
 			if (last_bus->bus_busy == 1) {//put stall
 				stat->mem_stall += 1;
-				//pipe->WB = -10;
+				pipe->WB = -10;
 			}
 			else {
-				//if (last_bus->bus_origid != pipe->core_id) {//create bus read
-				last_bus->bus_origid = pipe->core_id;
-				last_bus->bus_busy = 1;//start transaction
-				last_bus->bus_cmd = 1;//bus read
-				last_bus->data_owner = 4;
-				last_bus->flush_cycle = cycle + 64;
-				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
-				last_bus->creation_cycle = cycle;
-				stat->read_hit -= 1;//becuase in the lw its not really hit
-				stat->read_miss += 1;
-				}
+				if (last_bus->bus_origid != pipe->core_id) {//create bus read
+					last_bus->bus_origid = pipe->core_id;
+					last_bus->bus_busy = 1;//start transaction
+					last_bus->bus_cmd = 1;//bus read
+					last_bus->data_owner = 4;
+					last_bus->flush_cycle = cycle + 64;
+					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+					last_bus->creation_cycle = cycle;
+					stat->read_hit -= 1;//becuase in the lw its not really hit
+					stat->read_miss += 1;
+					}
+				
 				stat->mem_stall += 1;
 				pipe->WB = -10;
 			}
@@ -125,7 +126,7 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 					pipe->WB = -10;
 				}
 				else {
-					put_msi_in_tsram(tsram,index,1);
+					put_msi_in_tsram(tsram, index, 1);
 					last_bus->bus_origid = pipe->core_id;
 					last_bus->bus_busy = 1;//start transaction
 					last_bus->bus_cmd = 3;//bus flush
@@ -139,7 +140,7 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 				}
 			}
 			increment_pc = 0;
-		
+		}
 	}
 	//sw and sc opcodes handle in memory stage
 	if (cmd_mem.opcode == 17 || cmd_mem.opcode == 19) {
