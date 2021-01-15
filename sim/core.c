@@ -95,21 +95,22 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 			stat->read_hit += 1;
 		}
 		//invalid data (cache miss)
-		else if (get_msi_from_tsram(tsram[index]) == 0 || get_msi_from_tsram(tsram[index]) == 1) {
+		else if (get_msi_from_tsram(tsram[index]) == 0) {
 			if (last_bus->bus_busy == 1) {//put stall
 				stat->mem_stall += 1;
-				pipe->WB = -10;
+				//pipe->WB = -10;
 			}
 			else {
-				if (last_bus->bus_origid != pipe->core_id) {//create bus read
-					last_bus->bus_origid = pipe->core_id;
-					last_bus->bus_busy = 1;//start transaction
-					last_bus->bus_cmd = 1;//bus read
-					last_bus->flush_cycle = cycle + 64;
-					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
-					last_bus->creation_cycle = cycle;
-					stat->read_hit -= 1;//becuase in the lw its not really hit
-					stat->read_miss += 1;
+				//if (last_bus->bus_origid != pipe->core_id) {//create bus read
+				last_bus->bus_origid = pipe->core_id;
+				last_bus->bus_busy = 1;//start transaction
+				last_bus->bus_cmd = 1;//bus read
+				last_bus->data_owner = 4;
+				last_bus->flush_cycle = cycle + 64;
+				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
+				last_bus->creation_cycle = cycle;
+				stat->read_hit -= 1;//becuase in the lw its not really hit
+				stat->read_miss += 1;
 				}
 				stat->mem_stall += 1;
 				pipe->WB = -10;
@@ -128,6 +129,7 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 					last_bus->bus_origid = pipe->core_id;
 					last_bus->bus_busy = 1;//start transaction
 					last_bus->bus_cmd = 3;//bus flush
+					last_bus->data_owner = pipe->core_id;
 					last_bus->flush_cycle = -1;
 					last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
 					last_bus->bus_data = dsram[index];
@@ -137,7 +139,7 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 				}
 			}
 			increment_pc = 0;
-		}
+		
 	}
 	//sw and sc opcodes handle in memory stage
 	if (cmd_mem.opcode == 17 || cmd_mem.opcode == 19) {
@@ -156,6 +158,7 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 				last_bus->bus_origid = pipe->core_id;
 				last_bus->bus_busy = 1;//start transaction
 				last_bus->bus_cmd = 3;//bus flush
+				last_bus->data_owner = pipe->core_id;
 				last_bus->data_destination = 4;
 				last_bus->flush_cycle = -1;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
@@ -175,6 +178,7 @@ int core_execution(int* cycle, int pc, int core_id, int* imem, int* regs,
 				last_bus->bus_origid = pipe->core_id;
 				last_bus->bus_busy = 1;//start transaction
 				last_bus->bus_cmd = 2;//busrdx
+				last_bus->data_owner = 4; // we originally ask the data from the main mem
 				last_bus->data_destination = pipe->core_id;
 				last_bus->flush_cycle = cycle + 64;
 				last_bus->bus_addr = regs[cmd_mem.rs] + regs[cmd_mem.rt];
@@ -274,7 +278,7 @@ void snoop_bus(BUS_ptr last_bus, int* tsram, int* cycle, int core_id, int* dsram
 		else if (get_msi_from_tsram(tsram[index]) == 1)
 			break;
 		else if (get_msi_from_tsram(tsram[index]) == 2 && get_tag_from_tsram(tsram[index])==tag) {//need to flush every one?
-			last_bus->bus_data = dsram[get_index(last_bus->bus_addr)];
+			last_bus->bus_data = dsram[index];
 			last_bus->data_owner = core_id;
 			break;
 		}
@@ -333,7 +337,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, int mem[]) {
 				last_bus->prev_cmd = last_bus->bus_cmd;
 				last_bus->bus_cmd = 3;
 				last_bus->flush_cycle = -1;
-				mem[last_bus->bus_addr] = last_bus->bus_data;
+				//mem[last_bus->bus_addr] = last_bus->bus_data;
 				last_bus->creation_cycle = cycle;
 			}
 			else if(cycle==last_bus->flush_cycle){
@@ -355,7 +359,7 @@ void execution_bus(BUS_ptr last_bus, int *cycle, int mem[]) {
 				last_bus->prev_cmd = last_bus->bus_cmd;
 				last_bus->bus_cmd = 3;
 				last_bus->flush_cycle = -1;
-				mem[last_bus->bus_addr] = last_bus->bus_data;
+				//mem[last_bus->bus_addr] = last_bus->bus_data;
 				last_bus->creation_cycle = cycle;
 			}
 			else if (cycle == last_bus->flush_cycle) {//made flush
@@ -371,7 +375,8 @@ void execution_bus(BUS_ptr last_bus, int *cycle, int mem[]) {
 		}
 		case 3: // Flush
 		{
-			mem[last_bus->bus_addr] = last_bus->bus_data;
+			if (last_bus->bus_origid != 4)
+				mem[last_bus->bus_addr] = last_bus->bus_data;
 			// Flush had happened, reset bus to idle
 			
 			last_bus = initilize_bus(last_bus);
@@ -918,12 +923,12 @@ void lw(int* regs, Command cmd, int* dsram)
 }
 
 //sw command.
-void sw(int* regs, Command cmd, int* dsram, int* tsram[])
+void sw(int* regs, Command cmd, int* dsram, int* tsram)
 {
 	if (get_index(regs[cmd.rs] + regs[cmd.rt]) < DSRAM_SIZE) {
 		dsram[get_index(regs[cmd.rs] + regs[cmd.rt])] = regs[cmd.rd];
-		put_msi_in_tsram(tsram, regs[cmd.rs] + regs[cmd.rt], 2);
-		put_tag_in_tsram(tsram, regs[cmd.rs] + regs[cmd.rt], get_tag(regs[cmd.rs] + regs[cmd.rt]));
+		//put_msi_in_tsram(tsram, regs[cmd.rs] + regs[cmd.rt], 2);
+		//put_tag_in_tsram(tsram, regs[cmd.rs] + regs[cmd.rt], get_tag(regs[cmd.rs] + regs[cmd.rt]));
 	}
 }
 

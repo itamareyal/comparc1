@@ -107,7 +107,8 @@ int read_memin_imem(int* mem, char* address)
 	{
 		if (strcmp(line, "\n") == 0 || strcmp(line, "\0") == 0) // ignore white spaces
 			continue;
-		mem[i] = strtol(line, NULL, 16);
+		int temp = strtol(line, NULL, 16);
+		mem[i] = temp;
 		i++;
 	}
 	fclose(fp); // close file
